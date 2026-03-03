@@ -158,4 +158,4 @@ async def caminetto(ctx, azione: str = None, quantita: int = 1):
         )
         await ctx.send(embed=embed)
 
-bot.run(os.environ["DISCORD_TOKEN"])
+bot.run("IL_TUO_TOKEN_QUI")
