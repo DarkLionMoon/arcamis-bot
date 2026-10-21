@@ -1,0 +1,11 @@
+{
+  "piedi": 3,
+  "carretto": 3,
+  "carrozza": 6,
+  "cavallo": 12,
+  "ts_terra": 8,
+  "ts_cavallo": 4,
+  "treno": 25,
+  "ts_treno": 2,
+  "treno_visibile": true
+}
