@@ -6,4 +6,4 @@ workers_dev = true
 # La chiave pubblica NON è un segreto: la trovi nel Developer Portal, pagina General Information.
 # Sostituisci il valore qui sotto (oppure impostala dalla dashboard di Cloudflare).
 [vars]
-DISCORD_PUBLIC_KEY = "INCOLLA_QUI_LA_PUBLIC_KEY"
+DISCORD_PUBLIC_KEY = "c33c5287c976fda8ed9f2b530f5a1ac01f0cc5bf4ed2f82ec7e046ee7418e732"
