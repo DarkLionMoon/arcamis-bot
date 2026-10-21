@@ -1,0 +1,10 @@
+{
+  "Arcamis": [
+    { "nome": "Il Cinghiale Dorato", "prezzo_mo": 15, "note": "Camera singola, pasti inclusi." },
+    { "nome": "La Lanterna", "prezzo_mo": 8, "note": "Camerata, colazione." }
+  ],
+  "Forte Vigilus": [
+    { "nome": "Il Bastione", "prezzo_mo": 10, "note": "Vicina alla caserma." },
+    { "nome": "Riposo del Sentinella", "prezzo_mo": 6, "note": "Semplice e pulita." }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "mezzi": {
+    "piedi": { "nome": "A piedi", "miglia_giorno": 24 },
+    "cavallo": { "nome": "A cavallo", "miglia_giorno": 48 },
+    "carretto": { "nome": "In carretto", "miglia_giorno": 36 }
+  },
+  "ore_di_viaggio_al_giorno": 8,
+  "sconto_strade_percento": 0,
+  "strade": [
+    ["Arcamis", "Forte Vigilus", 30],
+    ["Arcamis", "Passo di Julius", 45],
+    ["Forte Vigilus", "Passo di Julius", 20],
+    ["Passo di Julius", "Foresta Infinita", 60]
+  ]
+}

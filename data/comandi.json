@@ -1,0 +1,25 @@
+{
+  "regole": {
+    "alias": ["regolamento"],
+    "descrizione": "Mostra le regole del server",
+    "embed": {
+      "titolo": "Regolamento di Arcamis",
+      "descrizione": "Il rispetto reciproco viene prima di ogni altra cosa.",
+      "colore": "#c9a227",
+      "campi": [
+        { "nome": "Condotta", "valore": "Niente insulti, niente spoiler a chi non ha giocato la sessione." },
+        { "nome": "Gioco", "valore": "Le decisioni del Game Master sono definitive durante la sessione." }
+      ],
+      "footer": "Modifica questo testo in data/comandi.json"
+    }
+  },
+  "benvenuto": {
+    "alias": [],
+    "descrizione": "Messaggio di benvenuto per i nuovi arrivati",
+    "embed": {
+      "titolo": "Benvenuto nelle Marche",
+      "descrizione": "Usa `!aiuto` per vedere tutti i comandi disponibili.",
+      "colore": "#3b6ea5"
+    }
+  }
+}
