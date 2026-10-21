@@ -1,0 +1,9 @@
+name = "arcamis-bot"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# La chiave pubblica NON è un segreto: la trovi nel Developer Portal, pagina General Information.
+# Sostituisci il valore qui sotto (oppure impostala dalla dashboard di Cloudflare).
+[vars]
+DISCORD_PUBLIC_KEY = "INCOLLA_QUI_LA_PUBLIC_KEY"

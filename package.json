@@ -1,0 +1,23 @@
+{
+  "name": "arcamis-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bot Discord su Cloudflare Workers (slash command via interazioni HTTP)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "register": "node scripts/register.js",
+    "register:dry": "node scripts/register.js --dry",
+    "test": "node test/test.js"
+  },
+  "dependencies": {
+    "discord-interactions": "^4.1.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.10"
+  }
+}
