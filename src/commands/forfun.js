@@ -194,11 +194,12 @@ function riequilibra(presenti, riserve, max) {
   return saliti;
 }
 
-const api = (env, metodo, percorso, corpo) =>
+const api = (env, metodo, percorso, corpo, extra = {}) =>
   fetch(`${API}${percorso}`, {
     method: metodo,
     headers: { Authorization: `Bot ${env.DISCORD_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'DiscordBot (arcamis-bot, 1.0)' },
     ...(corpo ? { body: JSON.stringify(corpo) } : {}),
+    ...extra,
   });
 
 // Il thread creato dal post ha lo stesso id del post. Scrive senza bloccare il resto; ping solo agli `utenti` indicati.
@@ -562,6 +563,44 @@ export async function promemoria(env, adesso = Date.now()) {
     inviati++;
   }
   return inviati;
+}
+
+// Mezzanotte (nel fuso del server) del giorno che contiene `ms`.
+function inizioGiorno(ms) {
+  const p = parti(ms);
+  const muro = Date.UTC(p.year, p.month - 1, p.day);
+  let u = muro - scostamento(muro);
+  u = muro - scostamento(u);
+  return u;
+}
+
+// Sessioni di oggi e dei 7 giorni successivi, lette dagli ultimi 100 messaggi del canale (usate da /oggi).
+// Restituisce null se manca la configurazione o Discord non risponde: chi chiama le omette senza errore.
+export async function sessioniInArrivo(env, adesso = Date.now()) {
+  const nomeQuando = CAMPI[indiceRuolo('quando') - 1]?.nome;
+  if (!env?.DISCORD_TOKEN || !env?.FORFUN_CANALE || !nomeQuando) return null;
+  try {
+    const r = await api(env, 'GET', `/channels/${env.FORFUN_CANALE}/messages?limit=100`, null, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    const oggi0 = inizioGiorno(adesso);
+    const domani0 = inizioGiorno(oggi0 + 36 * 3600e3);
+    const fine = domani0 + 7 * 86400e3;
+    const lista = [];
+    for (const m of await r.json()) {
+      const e = m.embeds?.[0];
+      if (!e || annullata(m) || !m.components?.[0]?.components?.some((c) => c.custom_id?.startsWith('ffr|p|'))) continue;
+      const t = Number(/<t:(\d+):F>/.exec(e.fields?.find((f) => f.name === nomeQuando)?.value ?? '')?.[1]);
+      if (!t || t * 1000 < oggi0 || t * 1000 >= fine) continue;
+      lista.push({
+        id: m.id, titolo: e.title, t, presenti: iscritti(e).presenti.length, max: maxDi(m),
+        iniziata: (e.footer?.text ?? '').includes(INIZIATA), oggi: t * 1000 < domani0,
+      });
+    }
+    return lista.sort((a, b) => a.t - b.t);
+  } catch (err) {
+    console.error('Lettura sessioni fallita:', err);
+    return null;
+  }
 }
 
 export default {
