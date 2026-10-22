@@ -110,22 +110,25 @@ async function rispondi(op, max, { i, env }) {
   const utente = (i.member?.user ?? i.user).id;
   let presenti = idsDi(fp);
   let riserve = idsDi(fr);
-  let assenti = idsDi(fa).filter((u) => u !== utente);
+  let assenti = idsDi(fa);
+  const eraAssente = assenti.includes(utente);
+  const eraIscritto = presenti.includes(utente) || riserve.includes(utente);
   const saliti = [];
-  if (op === 'p') {
-    if (!presenti.includes(utente) && !riserve.includes(utente)) {
-      if (max && presenti.length >= max) riserve.push(utente);
-      else presenti.push(utente);
-    }
-  } else {
-    presenti = presenti.filter((u) => u !== utente);
-    riserve = riserve.filter((u) => u !== utente);
+  // Ogni pulsante è un interruttore: un secondo clic toglie la risposta data.
+  presenti = presenti.filter((u) => u !== utente);
+  riserve = riserve.filter((u) => u !== utente);
+  assenti = assenti.filter((u) => u !== utente);
+  if (op === 'p' && !eraIscritto) {
+    if (max && presenti.length >= max) riserve.push(utente);
+    else presenti.push(utente);
+  } else if (op === 'a' && !eraAssente) {
     assenti.push(utente);
-    while (max && presenti.length < max && riserve.length) {
-      const u = riserve.shift();
-      presenti.push(u);
-      saliti.push(u);
-    }
+  }
+  // Se si è liberato un posto, la prima riserva sale tra i presenti.
+  while (max && presenti.length < max && riserve.length) {
+    const u = riserve.shift();
+    presenti.push(u);
+    saliti.push(u);
   }
   const nuovo = { title: e.title, description: e.description, color: e.color };
   if (e.footer?.text) nuovo.footer = { text: e.footer.text };
