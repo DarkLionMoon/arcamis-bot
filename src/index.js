@@ -1,6 +1,5 @@
 import { verifyKey } from 'discord-interactions';
-import { esegui, suggerisci } from './registry.js';
-import itinerario from './commands/itinerario.js';
+import { esegui, suggerisci, componente } from './registry.js';
 
 // Tipi di interazione e di risposta di Discord.
 const PING = 1;
@@ -54,7 +53,7 @@ export default {
     if (i.type === COMPONENTE) {
       let dati = null;
       try {
-        dati = itinerario.componente(i.data.custom_id, i.data.values);
+        dati = componente(i.data.custom_id, i.data.values);
       } catch (err) {
         console.error('Errore nel componente:', err);
       }
