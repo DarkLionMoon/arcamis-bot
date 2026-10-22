@@ -1,10 +1,11 @@
 import semplici from '../data/comandi.json' with { type: 'json' };
 import locanda from './commands/locanda.js';
 import itinerario from './commands/itinerario.js';
+import bollettino from './commands/bollettino.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { locanda, itinerario };
+const gestori = { locanda, itinerario, bollettino };
 
 const NOME_VALIDO = /^[a-z0-9_-]{1,32}$/;
 
@@ -61,6 +62,15 @@ export function esegui(nome, opzioni) {
   const trovato = nomiSemplici().find(([k]) => norm(k) === n);
   if (trovato) return { embeds: [embed(trovato[1].embed || {})] };
   return errore('Comando non riconosciuto. Se è nuovo, esegui di nuovo `npm run register`.');
+}
+
+// Clic su menu o pulsanti: ogni comando riconosce i propri id e restituisce null per quelli altrui.
+export function componente(id, valori) {
+  for (const g of Object.values(gestori)) {
+    const r = g.componente?.(id, valori);
+    if (r) return r;
+  }
+  return null;
 }
 
 // Suggerimenti di autocompletamento per l'opzione "in focus".
