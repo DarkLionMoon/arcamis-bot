@@ -1,6 +1,9 @@
 {
-  "titolo": "For Fun",
+ "titolo": "For Fun",
   "colore": "#9b59b6",
+  "fuso": "Europe/Rome",
+  "promemoria_minuti": 60,
+  "ruolo_notifica": "1558770843813806190",
   "campi": [
     { "nome": "Titolo", "hint": "Il nome della sessione", "max": 80, "obbligatorio": true, "ruolo": "titolo" },
     { "nome": "Gioco/Sistema", "hint": "Il nome del gioco o del sistema utilizzato?", "max": 1000, "lungo": true, "obbligatorio": true, "ruolo": "descrizione" },
