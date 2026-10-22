@@ -6,10 +6,12 @@ const PING = 1;
 const COMANDO = 2;
 const COMPONENTE = 3;
 const AUTOCOMPLETAMENTO = 4;
+const INVIO_MODULO = 5;
 const R_PONG = 1;
 const R_MESSAGGIO = 4;
 const R_AGGIORNA = 7;
 const R_SUGGERIMENTI = 8;
+const R_MODULO = 9;
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
@@ -49,17 +51,19 @@ export default {
       return json({ type: R_SUGGERIMENTI, data: { choices: suggerisci(i.data.name, i.data.options) } });
     }
 
-    // Clic su menu a tendina o pulsanti del messaggio di /itinerario.
-    if (i.type === COMPONENTE) {
+    // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
+    if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
       let dati = null;
       try {
-        dati = componente(i.data.custom_id, i.data.values);
+        const valori = i.type === INVIO_MODULO ? i.data.components : i.data.values;
+        dati = await componente(i.data.custom_id, valori, { i, env });
       } catch (err) {
         console.error('Errore nel componente:', err);
       }
       if (!dati) {
         return json({ type: R_MESSAGGIO, data: { content: 'Questo messaggio non è più valido: rilancia il comando.', flags: 64 } });
       }
+      if (dati.modale) return json({ type: R_MODULO, data: dati.modale });
       // Errore: risposta privata. Altrimenti si aggiorna il messaggio esistente.
       if (dati.flags === 64) return json({ type: R_MESSAGGIO, data: dati });
       return json({ type: R_AGGIORNA, data: { ...dati, allowed_mentions: { parse: [] } } });
@@ -68,7 +72,7 @@ export default {
     if (i.type === COMANDO) {
       let dati;
       try {
-        dati = esegui(i.data.name, i.data.options);
+        dati = esegui(i.data.name, i.data.options, { i, env });
       } catch (err) {
         console.error(`Errore nel comando ${i.data.name}:`, err);
         dati = {
