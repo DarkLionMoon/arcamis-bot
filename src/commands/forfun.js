@@ -137,7 +137,7 @@ const elenco = (l) => (l.length ? l.slice(0, 40).map((u) => `<@${u}>`).join('\n'
 const campiIscritti = (presenti, riserve, assenti, max) => [
   { nome: `✅ Presenti (${presenti.length}${max ? `/${max}` : ''})`, valore: elenco(presenti) },
   ...(riserve.length ? [{ nome: `🕐 Riserve (${riserve.length})`, valore: elenco(riserve) }] : []),
-  { nome: `❌ Assenti (${assenti.length})`, valore: elenco(assenti) },
+  { nome: `❔ Tentativi (${assenti.length})`, valore: elenco(assenti) },
 ];
 // A posti pieni "Ci sono" diventa "Mettiti in riserva"; a iscrizioni chiuse i due pulsanti si spengono.
 const tastiIscrizione = (max, piena = false, chiusa = false) => [
@@ -145,7 +145,7 @@ const tastiIscrizione = (max, piena = false, chiusa = false) => [
     type: 1,
     components: [
       { type: 2, style: piena ? 1 : 3, label: piena ? 'Mettiti in riserva' : 'Ci sono', custom_id: `ffr|p|${max}`, disabled: chiusa },
-      { type: 2, style: 4, label: 'Non posso', custom_id: `ffr|a|${max}`, disabled: chiusa },
+      { type: 2, style: 2, label: 'Tentativo', emoji: { name: '❔' }, custom_id: `ffr|a|${max}`, disabled: chiusa },
       { type: 2, style: 2, label: '⚙️ Gestisci', custom_id: 'ffg|g' },
     ],
   },
@@ -164,7 +164,7 @@ function iscritti(e) {
   const campi = e?.fields ?? [];
   const fp = campi.find((f) => f.name.startsWith('✅ Presenti'));
   const fr = campi.find((f) => f.name.startsWith('🕐 Riserve'));
-  const fa = campi.find((f) => f.name.startsWith('❌ Assenti'));
+  const fa = campi.find((f) => f.name.startsWith('❔ Tentativi') || f.name.startsWith('❌ Assenti')); // il secondo: post vecchi
   return {
     fp, fa,
     altri: campi.filter((f) => f !== fp && f !== fr && f !== fa),
@@ -536,8 +536,9 @@ export async function promemoria(env, adesso = Date.now()) {
       env,
       m.id,
       `🔔 **${e.title}** inizia <t:${t}:R>!\n${s.presenti.map((u) => `<@${u}>`).join(' ')}` +
-        (s.riserve.length ? `\nRiserve, tenetevi pronti: ${s.riserve.map((u) => `<@${u}>`).join(' ')}` : ''),
-      utenti,
+        (s.riserve.length ? `\nRiserve, tenetevi pronti: ${s.riserve.map((u) => `<@${u}>`).join(' ')}` : '') +
+        (s.assenti.length ? `\nIn dubbio, confermate se potete: ${s.assenti.map((u) => `<@${u}>`).join(' ')}` : ''),
+      [...utenti, ...s.assenti],
     );
     inviati++;
   }
