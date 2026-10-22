@@ -78,6 +78,79 @@ function modale(g, valori) {
   };
 }
 
+// Iscrizioni: l'elenco vive nei due campi finali del post (menzioni), nessun database.
+// I pulsanti portano il numero di posti nell'id (ffr|p|<posti> e ffr|a|<posti>; 0 = illimitati).
+const ID_UTENTE = /<@(\d+)>/g;
+const idsDi = (f) => (f ? [...f.value.matchAll(ID_UTENTE)].map((m) => m[1]) : []);
+const elenco = (l) => (l.length ? l.slice(0, 40).map((u) => `<@${u}>`).join('\n') : '—');
+const campiIscritti = (presenti, riserve, assenti, max) => [
+  { name: `✅ Presenti (${presenti.length}${max ? `/${max}` : ''})`, value: elenco(presenti), inline: false },
+  ...(riserve.length ? [{ name: `🕐 Riserve (${riserve.length})`, value: elenco(riserve), inline: false }] : []),
+  { name: `❌ Assenti (${assenti.length})`, value: elenco(assenti), inline: false },
+];
+// A posti pieni "Ci sono" non si spegne: diventa "Mettiti in riserva".
+const tastiIscrizione = (max, piena = false) => [
+  {
+    type: 1,
+    components: [
+      { type: 2, style: piena ? 1 : 3, label: piena ? 'Mettiti in riserva' : 'Ci sono', custom_id: `ffr|p|${max}` },
+      { type: 2, style: 4, label: 'Non posso', custom_id: `ffr|a|${max}` },
+    ],
+  },
+];
+
+// Presenti, poi riserve in ordine di arrivo: se si libera un posto, la prima riserva sale tra i presenti.
+async function rispondi(op, max, { i, env }) {
+  const e = i?.message?.embeds?.[0];
+  const campi = e?.fields ?? [];
+  const fp = campi.find((f) => f.name.startsWith('✅ Presenti'));
+  const fr = campi.find((f) => f.name.startsWith('🕐 Riserve'));
+  const fa = campi.find((f) => f.name.startsWith('❌ Assenti'));
+  if (!fp || !fa) return null;
+  const utente = (i.member?.user ?? i.user).id;
+  let presenti = idsDi(fp);
+  let riserve = idsDi(fr);
+  let assenti = idsDi(fa).filter((u) => u !== utente);
+  const saliti = [];
+  if (op === 'p') {
+    if (!presenti.includes(utente) && !riserve.includes(utente)) {
+      if (max && presenti.length >= max) riserve.push(utente);
+      else presenti.push(utente);
+    }
+  } else {
+    presenti = presenti.filter((u) => u !== utente);
+    riserve = riserve.filter((u) => u !== utente);
+    assenti.push(utente);
+    while (max && presenti.length < max && riserve.length) {
+      const u = riserve.shift();
+      presenti.push(u);
+      saliti.push(u);
+    }
+  }
+  const nuovo = { title: e.title, description: e.description, color: e.color };
+  if (e.footer?.text) nuovo.footer = { text: e.footer.text };
+  nuovo.fields = [
+    ...campi.filter((f) => f !== fp && f !== fr && f !== fa),
+    ...campiIscritti(presenti, riserve, assenti, max),
+  ];
+  // Il thread creato dal post ha lo stesso id del post: avviso (con ping solo al promosso), senza bloccare l'aggiornamento.
+  if (saliti.length && env?.DISCORD_TOKEN) {
+    try {
+      await fetch(`${API}/channels/${i.message.id}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bot ${env.DISCORD_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'DiscordBot (arcamis-bot, 1.0)' },
+        body: JSON.stringify({
+          content: `${saliti.map((u) => `<@${u}>`).join(' ')} si è liberato un posto: sei tra i **presenti** ✅`,
+          allowed_mentions: { users: saliti },
+        }),
+      });
+    } catch (err) {
+      console.error('Avviso promozione fallito:', err);
+    }
+  }
+  return { embeds: [nuovo], components: tastiIscrizione(max, max > 0 && presenti.length >= max) };
+}
+
 async function pubblica(valori, { i, env }) {
   if (!env?.DISCORD_TOKEN || !env?.FORFUN_CANALE) {
     return errore('Pubblicazione non configurata: mancano `DISCORD_TOKEN` (segreto) o `FORFUN_CANALE` (ID del canale) nel Worker.');
@@ -92,6 +165,8 @@ async function pubblica(valori, { i, env }) {
   const campi = CAMPI.map((c, k) => ({ c, n: k + 1 }))
     .filter(({ c, n }) => n !== iT && n !== iD && valori[n])
     .map(({ c, n }) => ({ nome: c.nome, valore: valori[n], inline: !c.lungo }));
+  const max = Number(/\d+/.exec(valori[indiceRuolo('posti')] ?? '')?.[0] ?? 0);
+  for (const f of campiIscritti([], [], [], max)) campi.push({ nome: f.name, valore: f.value });
 
   const chiama = (percorso, corpo) =>
     fetch(`${API}${percorso}`, {
@@ -115,6 +190,7 @@ async function pubblica(valori, { i, env }) {
         footer: `Arcamis 2026 · ${cfg.titolo} · proposta da ${nome}`,
       }),
     ],
+    components: tastiIscrizione(max),
     allowed_mentions: { parse: [] },
   });
   if (!r.ok) {
@@ -164,6 +240,7 @@ export default {
       if (op === 'p') return pubblica(corrente, ctx);
       return null;
     }
+    if (tipo === 'ffr') return rispondi(op, Number(g) || 0, ctx);
     if (tipo === 'ffm') {
       if (!ctx.i?.message) return errore('Bozza non trovata: rilancia `/forfun`.');
       const corrente = leggi(ctx.i.message);
