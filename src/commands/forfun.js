@@ -14,6 +14,7 @@ const FUSO = cfg.fuso ?? 'Europe/Rome';
 const ANTICIPO = (cfg.promemoria_minuti ?? 60) * 60000;
 const CHIUSA = '🔒 Iscrizioni chiuse';
 const PROMEMORIA = '🔔 Promemoria inviato';
+const INIZIATA = '▶️ Iniziata';
 
 const intervallo = (g) => [(g - 1) * PER_MODULO + 1, Math.min(g * PER_MODULO, CAMPI.length)];
 const sigla = (a, b) => (a === b ? `${a}` : `${a}-${b}`);
@@ -475,7 +476,12 @@ async function salva(valori, { i, env }) {
   const prima = /<t:(\d+):F>/.exec(e.fields?.find((f) => f.name === CAMPI[iQ - 1]?.nome)?.value ?? '')?.[1];
   const dopo = iQ ? leggiData(valori[iQ]) : null;
   let footer = e.footer?.text ?? '';
-  if (dopo && Number(prima) !== dopo) footer = conMarcatore(footer, PROMEMORIA, false);
+  if (dopo && Number(prima) !== dopo) {
+    const eraIniziata = footer.includes(INIZIATA);
+    footer = conMarcatore(conMarcatore(footer, PROMEMORIA, false), INIZIATA, false);
+    // Spostata nel futuro dopo la chiusura automatica: si riaprono anche le iscrizioni.
+    if (eraIniziata && dopo * 1000 > Date.now()) footer = conMarcatore(footer, CHIUSA, false);
+  }
 
   const titolo = valori[indiceRuolo('titolo')] ?? e.title;
   const nuovo = pulisci(e, {
@@ -486,7 +492,7 @@ async function salva(valori, { i, env }) {
   });
   const r = await modificaPost(env, idPost, {
     embeds: [nuovo],
-    components: tastiIscrizione(max, max > 0 && presenti.length >= max, chiusaDi(post)),
+    components: tastiIscrizione(max, max > 0 && presenti.length >= max, footer.includes(CHIUSA)),
   });
   if (!r.ok) {
     console.error('Modifica fallita:', r.status, await r.text());
@@ -503,9 +509,11 @@ async function salva(valori, { i, env }) {
   return { content: `✅ Modifiche salvate: ${urlPost(i, env, idPost)}`, embeds: [], components: [] };
 }
 
-// ---------- Promemoria automatico (chiamato dal cron del Worker) ----------
-// Legge gli ultimi 100 messaggi del canale, trova i post For Fun che iniziano entro `promemoria_minuti`
-// e scrive nel thread citando presenti e riserve. Il post viene marcato prima di scrivere, per non ripetere mai l'avviso.
+// ---------- Lavoro automatico (chiamato dal cron del Worker) ----------
+// Legge gli ultimi 100 messaggi del canale e, per ogni post For Fun:
+// - entro `promemoria_minuti` dall'inizio scrive nel thread citando presenti, riserve e tentativi;
+// - all'orario di inizio chiude le iscrizioni (una sola volta: se lo staff le riapre, restano aperte).
+// Il post viene marcato prima di scrivere, per non ripetere mai un'azione. Restituisce i promemoria inviati.
 export async function promemoria(env, adesso = Date.now()) {
   if (!env?.DISCORD_TOKEN || !env?.FORFUN_CANALE) return 0;
   const nomeQuando = CAMPI[indiceRuolo('quando') - 1]?.nome;
@@ -520,10 +528,20 @@ export async function promemoria(env, adesso = Date.now()) {
     const e = m.embeds?.[0];
     if (!e || annullata(m) || !m.components?.[0]?.components?.some((c) => c.custom_id?.startsWith('ffr|p|'))) continue;
     const footer = e.footer?.text ?? '';
-    if (footer.includes(PROMEMORIA)) continue;
     const t = /<t:(\d+):F>/.exec(e.fields?.find((f) => f.name === nomeQuando)?.value ?? '')?.[1];
+    if (!t) continue;
     const inizio = Number(t) * 1000;
-    if (!t || adesso >= inizio || adesso < inizio - ANTICIPO) continue;
+    if (adesso >= inizio) {
+      if (footer.includes(INIZIATA)) continue;
+      const max = maxDi(m);
+      const chiuso = await modificaPost(env, m.id, {
+        embeds: [pulisci(e, { footer: { text: conMarcatore(conMarcatore(footer, CHIUSA, true), INIZIATA, true) } })],
+        components: tastiIscrizione(max, max > 0 && iscritti(e).presenti.length >= max, true),
+      });
+      if (!chiuso.ok) console.error('Chiusura automatica fallita:', chiuso.status);
+      continue;
+    }
+    if (footer.includes(PROMEMORIA) || adesso < inizio - ANTICIPO) continue;
 
     const marcato = await modificaPost(env, m.id, { embeds: [pulisci(e, { footer: { text: conMarcatore(footer, PROMEMORIA, true) } })] });
     if (!marcato.ok) {
