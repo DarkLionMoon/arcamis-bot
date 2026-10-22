@@ -1,5 +1,5 @@
 import { verifyKey } from 'discord-interactions';
-import { esegui, suggerisci, componente } from './registry.js';
+import { esegui, suggerisci, componente, promemoria } from './registry.js';
 
 // Tipi di interazione e di risposta di Discord.
 const PING = 1;
@@ -17,6 +17,11 @@ const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
 
 export default {
+  // Cron (vedi [triggers] in wrangler.toml): promemoria delle sessioni For Fun in arrivo.
+  async scheduled(_evento, env, ctx) {
+    ctx.waitUntil(promemoria(env).catch((err) => console.error('Errore nel promemoria:', err)));
+  },
+
   async fetch(request, env) {
     // Una visita dal browser serve solo a controllare che il Worker sia vivo.
     if (request.method === 'GET') return new Response('Bot attivo');
