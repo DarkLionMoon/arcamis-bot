@@ -3,10 +3,11 @@ import locanda from './commands/locanda.js';
 import itinerario from './commands/itinerario.js';
 import bollettino from './commands/bollettino.js';
 import forfun from './commands/forfun.js';
+import oggi from './commands/oggi.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { locanda, itinerario, bollettino, forfun };
+const gestori = { locanda, itinerario, bollettino, oggi, forfun };
 
 export { promemoria } from './commands/forfun.js';
 
