@@ -1,0 +1,16 @@
+{
+  "valles": ["Vallespiga", 17, 1],
+  "riva": ["Riva di Ferro", 19, 0],
+  "gale": ["Galeton", 19, 0],
+  "volo": ["Volonx", 17, 0],
+  "forte": ["Forte Vigilus", 14, 2],
+  "vigi": ["Vigilius", 15, 2],
+  "fumo": ["Fumofosco", 15, 4],
+  "infin": ["Foresta Infinita", 14, 3],
+  "gromot": ["Lago Gromot", 17, 3],
+  "foglia": ["Selva Fogliabruna", 16, 3],
+  "smarr": ["Foresta dello Smarrimento", 15, 3],
+  "malon": ["Malon", 18, 4],
+  "kaldur": ["Rovine di Kaldur", 15, 4],
+  "arcamis": ["Arcamis", 18, 0]
+}
