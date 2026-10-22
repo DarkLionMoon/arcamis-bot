@@ -8,6 +8,8 @@ import { embed, errore, norm } from './util.js';
 // Comandi con logica: un file in src/commands/, registrato qui.
 const gestori = { locanda, itinerario, bollettino, forfun };
 
+export { promemoria } from './commands/forfun.js';
+
 const NOME_VALIDO = /^[a-z0-9_-]{1,32}$/;
 
 // Tutti i nomi con cui un comando semplice può essere invocato (chiave + alias).
