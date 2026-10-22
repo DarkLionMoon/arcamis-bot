@@ -77,7 +77,7 @@ export default {
     if (i.type === COMANDO) {
       let dati;
       try {
-        dati = esegui(i.data.name, i.data.options, { i, env });
+        dati = await esegui(i.data.name, i.data.options, { i, env });
       } catch (err) {
         console.error(`Errore nel comando ${i.data.name}:`, err);
         dati = {
