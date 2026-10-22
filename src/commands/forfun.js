@@ -293,9 +293,10 @@ async function pubblica(valori, { i, env }) {
   const utente = i.member?.user ?? i.user;
   const nome = i.member?.nick ?? utente.global_name ?? utente.username;
   const max = maxDaPosti(valori[indiceRuolo('posti')]);
+  const ruolo = cfg.ruolo_notifica || '';
 
   const r = await api(env, 'POST', `/channels/${env.FORFUN_CANALE}/messages`, {
-    content: `<@${utente.id}> propone una sessione **${cfg.titolo}**`,
+    content: `<@${utente.id}> propone una sessione **${cfg.titolo}**${ruolo ? `\n<@&${ruolo}>` : ''}`,
     embeds: [
       embed({
         titolo: valori[indiceRuolo('titolo')],
@@ -306,7 +307,7 @@ async function pubblica(valori, { i, env }) {
       }),
     ],
     components: tastiIscrizione(max),
-    allowed_mentions: { parse: [] },
+    allowed_mentions: { parse: [], roles: ruolo ? [ruolo] : [] }, // ping solo al ruolo, mai al proponente
   });
   if (!r.ok) {
     console.error('Pubblicazione fallita:', r.status, await r.text());
