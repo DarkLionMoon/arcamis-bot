@@ -61,3 +61,25 @@ export function errore(messaggio) {
     flags: 64,
   };
 }
+
+// Giorno dell'anno di Arcamis (0-364) dalla data vera nel fuso di Roma: 1 = 1 gennaio, 0 = 31 dicembre.
+// Il 29 febbraio vale come il 28, così data e meteo restano allineati al calendario anche negli anni bisestili.
+// `ctx.ora` (giorni dall'epoca, solo per i test) fissa la data.
+const GIORNI_PRIMA_DEL_MESE = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+export function giornoArcamis(ctx = {}) {
+  let mese;
+  let giorno;
+  if (ctx.ora !== undefined) {
+    const t = new Date(ctx.ora * 86400000);
+    [mese, giorno] = [t.getUTCMonth(), t.getUTCDate()];
+  } else {
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Rome', month: 'numeric', day: 'numeric' })
+        .formatToParts(new Date())
+        .map((x) => [x.type, Number(x.value)]),
+    );
+    [mese, giorno] = [p.month - 1, p.day];
+  }
+  if (mese === 1 && giorno === 29) giorno = 28;
+  return (GIORNI_PRIMA_DEL_MESE[mese] + giorno) % 365;
+}
