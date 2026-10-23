@@ -25,12 +25,26 @@ function nomiSemplici() {
   return out;
 }
 
+
 function righeAiuto() {
   const righe = [];
-  for (const [nome, g] of Object.entries(gestori)) righe.push(`\`/${nome}\`: ${g.descrizione}`);
-  for (const [nome, def] of Object.entries(semplici)) righe.push(`\`/${nome}\`: ${def.descrizione || ''}`);
+  const esclusi = new Set(['locanda', 'regole']);
+
+  for (const [nome, g] of Object.entries(gestori)) {
+    if (!esclusi.has(norm(nome))) {
+      righe.push(`/${nome}: ${g.descrizione}`);
+    }
+  }
+
+  for (const [nome, def] of Object.entries(semplici)) {
+    if (!esclusi.has(norm(nome))) {
+      righe.push(`/${nome}: ${def.descrizione || ''}`);
+    }
+  }
+
   return righe;
 }
+
 
 // Definizioni da inviare a Discord (le usa scripts/register.js).
 export function definizioni() {
@@ -39,8 +53,9 @@ export function definizioni() {
     defs.push({ name: nome, description: g.descrizione.slice(0, 100), type: 1, options: g.opzioni || [] });
   }
   for (const [nome, def] of nomiSemplici()) {
-    defs.push({ name: nome, description: (def.descrizione || nome).slice(0, 100), type: 1 });
-  }
+  if (['locanda', 'regole'].includes(norm(nome))) continue;
+  defs.push({ name: nome, description: (def.descrizione || nome).slice(0, 100), type: 1 });
+}
 
   const visti = new Set();
   for (const d of defs) {
