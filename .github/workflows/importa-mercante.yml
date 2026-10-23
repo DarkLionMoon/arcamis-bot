@@ -1,0 +1,25 @@
+name: Importa catalogo mercante
+
+# Si avvia a mano: GitHub, scheda Actions, "Importa catalogo mercante", Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  importa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scarica gli oggetti
+        run: node scripts/importa-mercante.js
+      - name: Salva nel repository
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data/mercante.json
+          git diff --cached --quiet || (git commit -m "Aggiorna catalogo mercante" && git push)
