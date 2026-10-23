@@ -5,10 +5,11 @@ import bollettino from './commands/bollettino.js';
 import forfun from './commands/forfun.js';
 import oggi from './commands/oggi.js';
 import necrologio from './commands/necrologio.js';
+import pdi from './commands/pdi.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { locanda, itinerario, bollettino, oggi, necrologio, forfun };
+const gestori = { locanda, itinerario, pdi, bollettino, oggi, necrologio, forfun };
 
 export { promemoria } from './commands/forfun.js';
 
@@ -83,5 +84,5 @@ export function suggerisci(nome, opzioni) {
   const g = gestori[norm(nome)];
   const focus = opzioni.find((o) => o.focused);
   if (!g || !g.autocomplete || !focus) return [];
-  return g.autocomplete(focus.name, String(focus.value ?? ''));
+  return g.autocomplete(focus.name, String(focus.value ?? ''), leggiOpzioni(opzioni));
 }
