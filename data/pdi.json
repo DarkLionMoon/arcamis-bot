@@ -1,0 +1,155 @@
+{
+  "icone_tipo": {
+    "Citta": "🏙️",
+    "Fortezza": "🏰",
+    "Foresta": "🌲",
+    "Palude": "🌫️",
+    "Rovine": "🏚️",
+    "Lago": "🌊"
+  },
+  "icone_pericolo": {
+    "Sicuro": "🟢",
+    "Moderato": "🟡",
+    "Pericoloso": "🟠",
+    "Mortale": "🔴"
+  },
+  "colori_pericolo": {
+    "Sicuro": "#2ecc71",
+    "Moderato": "#f1c40f",
+    "Pericoloso": "#e67e22",
+    "Mortale": "#e74c3c"
+  },
+  "gruppi": [
+    {
+      "titolo": "🏙️ ═══ CITTA ═══",
+      "tipi": [
+        "Citta"
+      ]
+    },
+    {
+      "titolo": "🏰 ═══ FORTEZZE ═══",
+      "tipi": [
+        "Fortezza"
+      ]
+    },
+    {
+      "titolo": "🌲 ═══ FORESTE ═══",
+      "tipi": [
+        "Foresta"
+      ]
+    },
+    {
+      "titolo": "🌊 ═══ LAGHI ═══",
+      "tipi": [
+        "Lago",
+        "Palude",
+        "Rovine"
+      ]
+    }
+  ],
+  "regioni": {
+    "arcamis": {
+      "nome": "Marche di Arcamis",
+      "pdi": {
+        "arcamis": {
+          "tipo": "Citta",
+          "desc": "Capitale del marchesato, crocevia di commerci e politica.",
+          "pericolo": "Sicuro",
+          "lord": "Marchese Kaelion Varenthis",
+          "note": "Sede del potere marchionale. Mercato sempre attivo."
+        },
+        "volonx": {
+          "tipo": "Citta",
+          "desc": "Citta mercantile affacciata sulle pianure orientali.",
+          "pericolo": "Sicuro",
+          "lord": "Lord Daeris Mollwen",
+          "note": "Nota per i suoi mercanti d'armi e i magazzini del grano."
+        },
+        "galeton": {
+          "tipo": "Citta",
+          "desc": "Citta costiera vivace, fulcro della pesca e del commercio marittimo.",
+          "pericolo": "Sicuro",
+          "lord": "Lady Sira Veltoun",
+          "note": "Porto attivo. Si vocifera di contrabbando nei quartieri bassi."
+        },
+        "riva di ferro": {
+          "tipo": "Citta",
+          "desc": "Citta mineraria arroccata sulle coste occidentali.",
+          "pericolo": "Moderato",
+          "lord": "Lord Harven Duskmore",
+          "note": "Famosa per l'estrazione del ferro. Gli operai sono spesso in agitazione."
+        },
+        "vallespiga": {
+          "tipo": "Citta",
+          "desc": "Citta collinare circondata da vigneti e campi coltivati.",
+          "pericolo": "Sicuro",
+          "lord": "Lord Oren Callister",
+          "note": "Produce il miglior vino del marchesato. Mercato agricolo ogni settimana."
+        },
+        "vigilius": {
+          "tipo": "Fortezza",
+          "desc": "Presidio militare d'alta quota che sorveglia i passi montani.",
+          "pericolo": "Moderato",
+          "lord": "Lord Theron Ashveil",
+          "note": "Guarnigione permanente. Accesso limitato ai civili."
+        },
+        "forte vigilus": {
+          "tipo": "Fortezza",
+          "desc": "Avamposto militare a guardia del confine nord-occidentale.",
+          "pericolo": "Moderato",
+          "lord": "Lady Mira Stonfeld",
+          "note": "Rifornimenti scarsi. I soldati riferiscono di presenze nella foresta vicina."
+        },
+        "selva fogliabruna": {
+          "tipo": "Foresta",
+          "desc": "Foresta dalle foglie perennemente ambrate, attraversata da sentieri antichi.",
+          "pericolo": "Moderato",
+          "lord": "Nessuno",
+          "note": "Si dice ospiti una comunita di druidi eremiti."
+        },
+        "foresta dello smarrimento": {
+          "tipo": "Foresta",
+          "desc": "Foresta fitta e disorientante, pochi che si addentrano ne escono facilmente.",
+          "pericolo": "Pericoloso",
+          "lord": "Nessuno",
+          "note": "I sentieri sembrano spostarsi. Meglio non avventurarsi senza una guida."
+        },
+        "foresta infinita": {
+          "tipo": "Foresta",
+          "desc": "Distesa boschiva senza confini apparenti, remota e selvaggia.",
+          "pericolo": "Pericoloso",
+          "lord": "Nessuno",
+          "note": "Abitata da creature selvatiche. Nessuna mappa e mai risultata accurata."
+        },
+        "lago di gromot": {
+          "tipo": "Lago",
+          "desc": "Lago scuro e profondo circondato da boschi silenziosi.",
+          "pericolo": "Moderato",
+          "lord": "Nessuno",
+          "note": "Luogo di pesca per i villaggi vicini. Si narrano leggende su qualcosa nelle acque."
+        },
+        "fumofosco": {
+          "tipo": "Palude",
+          "desc": "Palude malsana avvolta da nebbie persistenti e odori sulfurei.",
+          "pericolo": "Pericoloso",
+          "lord": "Nessuno",
+          "note": "Evitata dai viaggiatori. Si dice ospiti alchimisti reietti e creature degeneri."
+        },
+        "rovine di kaldur": {
+          "tipo": "Rovine",
+          "desc": "Resti di un'antica citta sepolta dalla vegetazione e dal tempo.",
+          "pericolo": "Pericoloso",
+          "lord": "Nessuno",
+          "note": "Luogo maledetto secondo la tradizione locale. Cercatori di tesori raramente tornano."
+        },
+        "passo di nyssus": {
+          "tipo": "Foresta",
+          "desc": "Pianura generica, abbastanza incontaminata.",
+          "pericolo": "Sicuro",
+          "lord": "Nessuno",
+          "note": "Passaggio per carri."
+        }
+      }
+    }
+  }
+}
