@@ -173,18 +173,3 @@ export default {
     return new Response('Tipo di interazione non gestito', { status: 400 });
   },
 };
-
-      } catch (err) {
-        console.error(`Errore nel comando ${i.data.name}:`, err);
-        dati = {
-          embeds: [{ title: 'Errore', description: 'Qualcosa è andato storto nel comando.', color: 0xb3261e }],
-          flags: 64,
-        };
-      }
-      // Niente menzioni a catena dai testi dei comandi.
-      return json({ type: R_MESSAGGIO, data: { ...dati, allowed_mentions: { parse: [] } } });
-    }
-
-    return new Response('Tipo di interazione non gestito', { status: 400 });
-  },
-};
