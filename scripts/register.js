@@ -1,4 +1,3 @@
-js
 // Registra gli slash command su Discord.
 // DISCORD_GUILD_ID può contenere più ID separati da virgola.
 // Se è assente, i comandi vengono registrati globalmente.
