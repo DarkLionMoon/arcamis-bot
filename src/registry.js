@@ -10,7 +10,7 @@ import mercante from './commands/mercante.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { menu, itinerario, pdi, bollettino, oggi, necrologio, forfun };
+const gestori = { menu, itinerario, pdi, bollettino, oggi, necrologio, forfun, mercante };
 
 export { promemoria } from './commands/forfun.js';
 
