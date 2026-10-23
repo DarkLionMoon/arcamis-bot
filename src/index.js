@@ -1,12 +1,12 @@
 import { verifyKey } from 'discord-interactions';
 import { esegui, suggerisci, componente, promemoria } from './registry.js';
 
-// Tipi di interazione e di risposta di Discord.
 const PING = 1;
 const COMANDO = 2;
 const COMPONENTE = 3;
 const AUTOCOMPLETAMENTO = 4;
 const INVIO_MODULO = 5;
+
 const R_PONG = 1;
 const R_MESSAGGIO = 4;
 const R_AGGIORNA = 7;
@@ -15,84 +15,115 @@ const R_MODULO = 9;
 const R_CANCELLA_MESSAGGIO = 6;
 
 const json = (obj, status = 200) =>
-  new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
+  new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 
 export default {
-  // Cron (vedi [triggers] in wrangler.toml): promemoria delle sessioni For Fun in arrivo.
   async scheduled(_evento, env, ctx) {
-    ctx.waitUntil(promemoria(env).catch((err) => console.error('Errore nel promemoria:', err)));
+    ctx.waitUntil(
+      promemoria(env).catch((err) =>
+        console.error('Errore nel promemoria:', err)
+      )
+    );
   },
 
-  async fetch(request, env) {
-    // Una visita dal browser serve solo a controllare che il Worker sia vivo.
-    if (request.method === 'GET') return new Response('Bot attivo');
-    if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405 });
-
-    if (!env.DISCORD_PUBLIC_KEY || env.DISCORD_PUBLIC_KEY.startsWith('INCOLLA')) {
-      return new Response('DISCORD_PUBLIC_KEY non configurata', { status: 500 });
+  async fetch(request, env, ctx) {
+    if (request.method === 'GET') {
+      return new Response('Bot attivo');
     }
 
-    // Discord firma ogni richiesta: senza firma valida si risponde 401 (anche per il suo test iniziale).
+    if (request.method !== 'POST') {
+      return new Response('Metodo non consentito', { status: 405 });
+    }
+
+    if (
+      !env.DISCORD_PUBLIC_KEY ||
+      env.DISCORD_PUBLIC_KEY.startsWith('INCOLLA')
+    ) {
+      return new Response('DISCORD_PUBLIC_KEY non configurata', {
+        status: 500,
+      });
+    }
+
     const firma = request.headers.get('x-signature-ed25519');
     const timestamp = request.headers.get('x-signature-timestamp');
     const corpo = await request.text();
+
     let valida = false;
+
     try {
-      valida = Boolean(firma && timestamp && (await verifyKey(corpo, firma, timestamp, env.DISCORD_PUBLIC_KEY)));
+      valida = Boolean(
+        firma &&
+        timestamp &&
+        (await verifyKey(corpo, firma, timestamp, env.DISCORD_PUBLIC_KEY))
+      );
     } catch {
       valida = false;
     }
-    if (!valida) return new Response('Firma non valida', { status: 401 });
+
+    if (!valida) {
+      return new Response('Firma non valida', { status: 401 });
+    }
 
     let i;
+
     try {
       i = JSON.parse(corpo);
     } catch {
       return new Response('Richiesta non valida', { status: 400 });
     }
 
-    if (i.type === PING) return json({ type: R_PONG });
-
-    if (i.type === AUTOCOMPLETAMENTO) {
-      return json({ type: R_SUGGERIMENTI, data: { choices: suggerisci(i.data.name, i.data.options) } });
+    if (i.type === PING) {
+      return json({ type: R_PONG });
     }
 
-   
+    if (i.type === AUTOCOMPLETAMENTO) {
+      return json({
+        type: R_SUGGERIMENTI,
+        data: {
+          choices: suggerisci(i.data.name, i.data.options),
+        },
+      });
+    }
 
-    // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
-    
+    // Clic sui componenti e invio dei moduli.
+    if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
+      const id = String(i.data.custom_id || '');
+
+      // Il pulsante "Menu principale" deve chiudere il messaggio effimero.
       if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
-        // Conferma subito il clic del pulsante.
-        const conferma = json({ type: R_CANCELLA_MESSAGGIO });
-
-        // Elimina il messaggio effimero tramite il webhook Discord.
         const url =
           `https://discord.com/api/v10/webhooks/${i.application_id}` +
           `/${i.token}/messages/${i.message.id}`;
 
-        try {
-          const eliminazione = await fetch(url, { method: 'DELETE' });
+        // Elimina il messaggio dopo aver confermato l'interazione.
+        ctx.waitUntil(
+          fetch(url, { method: 'DELETE' }).then(async (risposta) => {
+            if (!risposta.ok) {
+              console.error(
+                'Errore eliminazione messaggio:',
+                risposta.status,
+                await risposta.text()
+              );
+            }
+          }).catch((err) => {
+            console.error('Errore eliminazione messaggio:', err);
+          })
+        );
 
-          if (!eliminazione.ok) {
-            console.error(
-              'Errore eliminazione messaggio:',
-              eliminazione.status,
-              await eliminazione.text()
-            );
-          }
-        } catch (err) {
-          console.error('Errore eliminazione messaggio:', err);
-        }
-
-        return conferma;
+        return json({ type: R_CANCELLA_MESSAGGIO });
       }
-
-
 
       let dati = null;
 
       try {
-        const valori = i.type === INVIO_MODULO ? i.data.components : i.data.values;
+        const valori =
+          i.type === INVIO_MODULO
+            ? i.data.components
+            : i.data.values;
+
         dati = await componente(i.data.custom_id, valori, { i, env });
       } catch (err) {
         console.error('Errore nel componente:', err);
@@ -102,14 +133,18 @@ export default {
         return json({
           type: R_MESSAGGIO,
           data: {
-            content: 'Questo messaggio non è più valido: rilancia il comando.',
+            content:
+              'Questo messaggio non è più valido: rilancia il comando.',
             flags: 64,
           },
         });
       }
 
       if (dati.modale) {
-        return json({ type: R_MODULO, data: dati.modale });
+        return json({
+          type: R_MODULO,
+          data: dati.modale,
+        });
       }
 
       const personale =
@@ -125,7 +160,7 @@ export default {
 
       const { flags: _flags, ...risposta } = dati;
 
-      // Primo clic dal messaggio pubblico: crea una risposta privata.
+      // Primo clic da un messaggio pubblico: risposta privata.
       if (personale && !(i.message?.flags & 64)) {
         return json({
           type: R_MESSAGGIO,
@@ -137,7 +172,7 @@ export default {
         });
       }
 
-      // Se il messaggio è già privato, aggiorna soltanto quello.
+      // Messaggio già privato: aggiorna quel messaggio.
       if (personale && (i.message?.flags & 64)) {
         return json({
           type: R_AGGIORNA,
@@ -159,7 +194,7 @@ export default {
         });
       }
 
-            return json({
+      return json({
         type: R_AGGIORNA,
         data: {
           ...risposta,
@@ -169,12 +204,13 @@ export default {
     }
 
     if (i.type === COMANDO) {
-  
       let dati;
+
       try {
         dati = await esegui(i.data.name, i.data.options, { i, env });
       } catch (err) {
         console.error(`Errore nel comando ${i.data.name}:`, err);
+
         dati = {
           embeds: [{
             title: 'Errore',
@@ -185,13 +221,17 @@ export default {
         };
       }
 
-      // Niente menzioni a catena dai testi dei comandi.
       return json({
         type: R_MESSAGGIO,
-        data: { ...dati, allowed_mentions: { parse: [] } },
+        data: {
+          ...dati,
+          allowed_mentions: { parse: [] },
+        },
       });
     }
 
-        return new Response('Tipo di interazione non gestito', { status: 400 });
+    return new Response('Tipo di interazione non gestito', {
+      status: 400,
+    });
   },
 };
