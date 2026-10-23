@@ -7,8 +7,8 @@
   "campi": [
     { "nome": "Titolo", "hint": "Il nome della sessione", "max": 80, "obbligatorio": true, "ruolo": "titolo" },
     { "nome": "Gioco/Sistema", "hint": "Il nome del gioco o del sistema utilizzato?", "max": 1000, "lungo": true, "obbligatorio": true, "ruolo": "descrizione" },
-    { "nome": "Data e Ora", "hint": "GG/MM/AAAA HH:MM (es. 25/10/2026 21:00)", "max": 20, "obbligatorio": true, "ruolo": "quando" },
-    { "nome": "Numero Partecipanti", "hint": "Quanti giocatori cerchi (es. 4)", "max": 50, "obbligatorio": true },
+    { "nome": "Data e Ora", "hint": "GG/MM/AAAA HH:MM (es. 25/10/2026 21:00)", "max": 20, "obbligatorio": true, "ruolo": "quando" },   
+{ "nome": "Numero Partecipanti", "hint": "Quanti giocatori cerchi (es. 4)", "max": 50, "obbligatorio": true, "ruolo": "posti" },
     { "nome": "Ambientazione", "hint": "Dove si ambienta la sessione", "max": 1000, "lungo": true },
     { "nome": "Note", "hint": "Qualsiasi altra informazione utile", "max": 1000, "lungo": true }
   ]
