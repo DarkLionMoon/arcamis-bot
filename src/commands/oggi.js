@@ -52,5 +52,20 @@ export default {
   descrizione: 'Oggi ad Arcamis: giorno, stagione, luna, meteo e sessioni For Fun in arrivo',
   opzioni: [],
   run: (_opzioni, ctx = {}) => costruisci(ctx),
-  componente: (id, _valori, ctx = {}) => (String(id) === 'og|r' ? costruisci(ctx) : null),
+ async componente(id, _valori, ctx = {}) {
+  const parti = String(id).split('|');
+
+  if (parti[0] === 'og' && parti[1] === 'r') {
+    return costruisci(ctx);
+  }
+
+  if (parti[0] === 'ogm') {
+    // Per ora riconosciamo il pulsante, ma non mostriamo
+    // una schermata di dettaglio finché non implementiamo
+    // il collegamento ai dettagli simulati.
+    return costruisci(ctx);
+  }
+
+  return null;
+},
 };
