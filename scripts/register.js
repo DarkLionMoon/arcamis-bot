@@ -43,13 +43,13 @@ for (const guildId of guildIds) {
     '/commands';
 
   const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bot ${DISCORD_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(defs),
-  });
+  method: 'PUT',
+  headers: {
+    Authorization: 'Bot ' + DISCORD_TOKEN,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(defs),
+});
 
   if (!res.ok) {
     console.error(
