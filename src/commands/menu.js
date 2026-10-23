@@ -6,6 +6,7 @@ import pdi from './pdi.js';
 import bollettino from './bollettino.js';
 import necrologio from './necrologio.js';
 import forfun from './forfun.js';
+import itinerario from './itinerario.js';
 import { embed, errore } from '../util.js';
 
 const HOME_ROW = {
@@ -63,19 +64,31 @@ function conRitorno(risultato) {
   return { ...risultato, components: componenti, flags: 64 };
 }
 
-function guidaItinerario() {
+// Finestra di testo: i pulsanti non hanno l'autocompletamento, quindi si scrivono le prime lettere dei luoghi.
+function modaleItinerario() {
+  const campo = (id, label, placeholder) => ({
+    type: 1,
+    components: [{ type: 4, custom_id: id, label, style: 1, required: true, max_length: 60, placeholder }],
+  });
   return {
-    embeds: [
-      embed({
-        titolo: '🧭 Pianifica un itinerario',
-        descrizione:
-          'Per calcolare distanza, tempi, costi e condizioni del viaggio, usa il comando **`/itinerario`** e seleziona sia la località di partenza sia la destinazione dai suggerimenti di Discord.',
-        colore: '#c9a227',
-        footer: 'Arcamis 2026 · Le due località sono obbligatorie',
-      }),
-    ],
-    components: [HOME_ROW],
+    modale: {
+      custom_id: 'menu|itm',
+      title: '🧭 Pianifica un itinerario',
+      components: [
+        campo('da', 'Partenza', 'Es. Arcamis'),
+        campo('a', 'Destinazione', 'Es. Aurenthar'),
+      ],
+    },
   };
+}
+
+// Legge i valori dei campi di una finestra di testo inviata.
+function leggiModale(valori = []) {
+  const out = {};
+  for (const riga of valori) {
+    for (const c of riga.components ?? []) out[c.custom_id] = String(c.value ?? '').trim();
+  }
+  return out;
 }
 
 function guidaAiuto() {
@@ -120,6 +133,16 @@ export default {
     const [prefisso, azione] = String(id).split('|');
     if (prefisso !== 'menu') return null;
     if (azione === 'home') return pannello();
+    if (azione === 'itinerario') return modaleItinerario();
+    if (azione === 'itm') {
+      const { da, a } = leggiModale(valori);
+      try {
+        return conRitorno(itinerario.run({ da, a }, ctx));
+      } catch (e) {
+        console.error('Errore itinerario dal pannello:', e);
+        return errore('Non è stato possibile calcolare il viaggio. Riprova o usa `/itinerario`.');
+      }
+    }
 
     const esegui = azioni[azione];
     if (!esegui) return errore('Funzione non riconosciuta. Rilancia `/menu`.');
