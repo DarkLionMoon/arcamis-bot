@@ -1,8 +1,9 @@
-// Registra gli slash command su Discord. Da eseguire in locale, NON sul Worker:
-//   DISCORD_TOKEN=... DISCORD_APPLICATION_ID=... npm run register
-// Con DISCORD_GUILD_ID i comandi compaiono subito su quel server (consigliato mentre provi).
-// Senza, diventano globali e Discord può impiegare fino a circa un'ora a mostrarli.
-// `--dry` stampa le definizioni senza inviare nulla.
+```js
+// Registra gli slash command su Discord.
+// Con DISCORD_GUILD_ID puoi indicare più server separati da virgola.
+// Senza DISCORD_GUILD_ID, i comandi diventano globali.
+// --dry stampa le definizioni senza inviare nulla.
+
 import { definizioni } from '../src/registry.js';
 
 const defs = definizioni();
@@ -13,26 +14,51 @@ if (process.argv.includes('--dry')) {
   process.exit(0);
 }
 
-const { DISCORD_TOKEN, DISCORD_APPLICATION_ID, DISCORD_GUILD_ID } = process.env;
+const {
+  DISCORD_TOKEN,
+  DISCORD_APPLICATION_ID,
+  DISCORD_GUILD_ID,
+} = process.env;
+
 if (!DISCORD_TOKEN || !DISCORD_APPLICATION_ID) {
-  console.error('Servono le variabili DISCORD_TOKEN e DISCORD_APPLICATION_ID.');
+  console.error(
+    'Servono le variabili DISCORD_TOKEN e DISCORD_APPLICATION_ID.'
+  );
   process.exit(1);
 }
 
-const url = DISCORD_GUILD_ID
-  ? `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/guilds/${DISCORD_GUILD_ID}/commands`
-  : `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/commands`;
+const guildIds = DISCORD_GUILD_ID
+  ? DISCORD_GUILD_ID.split(',').map((id) => id.trim()).filter(Boolean)
+  : [null];
 
-// PUT sostituisce l'intero elenco: i comandi che togli dal progetto spariscono anche da Discord.
-const res = await fetch(url, {
-  method: 'PUT',
-  headers: { Authorization: `Bot ${DISCORD_TOKEN}`, 'Content-Type': 'application/json' },
-  body: JSON.stringify(defs),
-});
+for (const guildId of guildIds) {
+  const url = guildId
+    ? `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/guilds/${guildId}/commands`
+    : `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/commands`;
 
-if (!res.ok) {
-  console.error(`Errore ${res.status}:`, await res.text());
-  process.exit(1);
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bot ${DISCORD_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(defs),
+  });
+
+  if (!res.ok) {
+    console.error(
+      `Errore ${res.status} (${guildId ?? 'global'}):`,
+      await res.text()
+    );
+    process.exit(1);
+  }
+
+  const registrati = await res.json();
+
+  console.log(
+    `Registrati ${registrati.length} comandi ${
+      guildId ? `sul server ${guildId}` : '(globali)'
+    }: ${registrati.map((c) => '/' + c.name).join(', ')}`
+  );
 }
-const registrati = await res.json();
-console.log(`Registrati ${registrati.length} comandi${DISCORD_GUILD_ID ? ' sul server di prova' : ' (globali)'}: ${registrati.map((c) => '/' + c.name).join(', ')}`);
+```
