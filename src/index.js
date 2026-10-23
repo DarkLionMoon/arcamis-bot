@@ -70,20 +70,30 @@ export default {
       }
       if (dati.modale) return json({ type: R_MODULO, data: dati.modale });
   // Dal menu pubblico crea una risposta effimera.
-// Se il messaggio è già effimero, aggiorna quello privato.
-if (dati.flags === 64 && !(i.message?.flags & 64)) {
-  return json({
-    type: R_MESSAGGIO,
-    data: { ...dati, allowed_mentions: { parse: [] } },
-  });
-}
 
-const { flags: _flags, ...risposta } = dati;
+      // Se il componente richiede una risposta effimera, apri una schermata privata.
+      if (dati.flags === 64) {
+        if (i.message?.flags & 64) {
+          const { flags: _flags, ...risposta } = dati;
+          return json({
+            type: R_AGGIORNA,
+            data: { ...risposta, allowed_mentions: { parse: [] } },
+          });
+        }
 
-return json({
-  type: R_AGGIORNA,
-  data: { ...risposta, allowed_mentions: { parse: [] } },
-});
+        return json({
+          type: R_MESSAGGIO,
+          data: { ...dati, allowed_mentions: { parse: [] } },
+        });
+      }
+
+      // Per gli altri componenti mantieni il comportamento attuale.
+      const { flags: _flags, ...risposta } = dati;
+      return json({
+        type: R_AGGIORNA,
+        data: { ...risposta, allowed_mentions: { parse: [] } },
+      });
+
     }
 
     if (i.type === COMANDO) {
