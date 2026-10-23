@@ -3,7 +3,7 @@
 // Dati: data/bollettino.json (luogo: [nome, temperatura base, zona meteo]) e data/meteo.json (tabelle meteo per zona).
 import meteo from '../../data/meteo.json' with { type: 'json' };
 import luoghi from '../../data/bollettino.json' with { type: 'json' };
-import { embed, errore, trovaNome, suggerimenti } from '../util.js';
+import { embed, errore, trovaNome, suggerimenti, giornoArcamis } from '../util.js';
 
 const SEP = '▱'.repeat(20);
 const FASI = ['🌑 Luna Nuova', '🌓 Primo Quarto', '🌕 Luna Piena', '🌗 Ultimo Quarto'];
@@ -26,9 +26,21 @@ const chiaveDi = (nome) => Object.keys(luoghi).find((k) => luoghi[k][0] === nome
 const elenco = Object.entries(luoghi).sort((a, b) => a[1][0].localeCompare(b[1][0], 'it'));
 
 const modulo = (x, n) => ((x % n) + n) % n; // come l'operatore % di Python, mai negativo (vale anche per i BigInt)
-const giornoOggi = (ctx) => modulo((ctx.ora ?? Math.floor(Date.now() / 86400000)) - 20453, 365);
+const giornoOggi = (ctx) => giornoArcamis(ctx);
 // Il moltiplicatore si scrive come in Python: 1.0 resta "1.0", non "1".
 const fmtMod = (m) => (Number.isInteger(m) ? m.toFixed(1) : String(m));
+
+// Giorno dell'anno (0-364) come data: 1 = 1 gennaio, 0 = 31 dicembre. Calendario di 365 giorni, senza anni bisestili.
+const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+const GIORNI_MESE = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+function dataDi(g) {
+  if (g === 0) return '31 dicembre';
+  let resto = g;
+  for (let m = 0; m < 12; m++) {
+    if (resto <= GIORNI_MESE[m]) return `${resto} ${MESI[m]}`;
+    resto -= GIORNI_MESE[m];
+  }
+}
 
 // Messaggio del bollettino per il luogo `chiave` (chiave di bollettino.json) nel giorno `g` (0-364).
 function costruisci(chiave, g, ctx = {}, nota = '') {
@@ -72,7 +84,7 @@ function costruisci(chiave, g, ctx = {}, nota = '') {
   const barra = bIco.repeat(tNorm) + '⬜'.repeat(10 - tNorm);
 
   const descrizione =
-    `📅 Giorno **${g}** · ${stagione} ${stIco}${nota}\n` +
+    `📅 **${dataDi(g)}** · ${stagione} ${stIco}${nota}\n` +
     `${SEP}\n` +
     `🌡️ ${barra}  **${tm}°C** / ${tn}°C\n` +
     `${SEP}\n` +
@@ -131,7 +143,7 @@ export default {
     { name: 'luogo', description: 'Località (predefinita: Arcamis)', type: 3, required: false, autocomplete: true },
     {
       name: 'giorno',
-      description: "Giorno dell'anno, da 0 a 364 (predefinito: oggi)",
+      description: "Giorno dell'anno, da 0 a 364 (1 = 1 gennaio; predefinito: oggi)",
       type: 4,
       required: false,
       min_value: 0,
