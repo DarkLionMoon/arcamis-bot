@@ -58,30 +58,13 @@ export default {
     }
 
    
+
     // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
     if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
-      
-      const customId = String(i.data.custom_id || '');
+      const id = String(i.data.custom_id || '');
 
       if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
-        const url =
-          `https://discord.com/api/v10/webhooks/${i.application_id}` +
-          `/${i.token}/messages/${i.message.id}`;
-
-        const eliminazione = fetch(url, { method: 'DELETE' });
-
-        // Conferma il click e attende la cancellazione del messaggio.
-        const risultato = await eliminazione;
-
-        if (!risultato.ok) {
-          console.error(
-            'Errore eliminazione messaggio effimero:',
-            risultato.status,
-            await risultato.text()
-          );
-        }
-
-        return json({ type: 6 });
+        return json({ type: R_CANCELLA_MESSAGGIO });
       }
 
       let dati = null;
@@ -107,10 +90,6 @@ export default {
         return json({ type: R_MODULO, data: dati.modale });
       }
 
-      const id = String(i.data.custom_id || '');
-      if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
-  return json({ type: R_CANCELLA_MESSAGGIO });
-}
       const personale =
         id.startsWith('og|') ||
         id.startsWith('ogm|') ||
@@ -167,8 +146,6 @@ export default {
       });
     }
 
-
-    if (i.type === COMANDO) {
       let dati;
       try {
         dati = await esegui(i.data.name, i.data.options, { i, env });
