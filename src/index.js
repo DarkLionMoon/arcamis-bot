@@ -72,6 +72,32 @@ export default {
   // Dal menu pubblico crea una risposta effimera.
 
       // Se il componente richiede una risposta effimera, apri una schermata privata.
+      
+      // I componenti di Oggi, Bollettino e Itinerario aprono una schermata privata.
+      const id = String(i.data.custom_id || '');
+      const personale =
+        id.startsWith('og|') ||
+        id.startsWith('ogm|') ||
+        id.startsWith('bol|') ||
+        id.startsWith('bog|') ||
+        id.startsWith('bmd|') ||
+        id.startsWith('bmr|') ||
+        id.startsWith('itd|') ||
+        id.startsWith('ita|') ||
+        id.startsWith('itp|');
+
+      if (personale && !(i.message?.flags & 64)) {
+        const { flags: _flags, ...contenuto } = dati;
+        return json({
+          type: R_MESSAGGIO,
+          data: {
+            ...contenuto,
+            flags: 64,
+            allowed_mentions: { parse: [] },
+          },
+        });
+      }
+
       if (dati.flags === 64) {
         if (i.message?.flags & 64) {
           const { flags: _flags, ...risposta } = dati;
@@ -85,6 +111,14 @@ export default {
           type: R_MESSAGGIO,
           data: { ...dati, allowed_mentions: { parse: [] } },
         });
+      }
+
+      const { flags: _flags, ...risposta } = dati;
+      return json({
+        type: R_AGGIORNA,
+        data: { ...risposta, allowed_mentions: { parse: [] } },
+      });
+
       }
 
       // Per gli altri componenti mantieni il comportamento attuale.
