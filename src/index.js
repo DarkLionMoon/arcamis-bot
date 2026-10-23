@@ -63,9 +63,29 @@ export default {
     if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
       const id = String(i.data.custom_id || '');
 
+     
       if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
-        return json({ type: R_CANCELLA_MESSAGGIO });
+        const url =
+          `https://discord.com/api/v10/webhooks/${i.application_id}` +
+          `/${i.token}/messages/${i.message.id}`;
+
+        try {
+          const risultato = await fetch(url, { method: 'DELETE' });
+
+          if (!risultato.ok) {
+            console.error(
+              'Errore eliminazione messaggio effimero:',
+              risultato.status,
+              await risultato.text()
+            );
+          }
+        } catch (err) {
+          console.error('Errore durante la cancellazione:', err);
+        }
+
+        return json({ type: R_PONG });
       }
+
 
       let dati = null;
 
