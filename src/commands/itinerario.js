@@ -4,7 +4,7 @@ import luoghi from '../../data/luoghi.json' with { type: 'json' };
 import meteo from '../../data/meteo.json' with { type: 'json' };
 import velocita from '../../data/velocita.json' with { type: 'json' };
 import prezzi from '../../data/prezzi.json' with { type: 'json' };
-import { embed, errore, trovaNome, suggerimenti } from '../util.js';
+import { embed, errore, trovaNome, suggerimenti, giornoArcamis } from '../util.js';
 
 const CHIAVE_GATEWAY = 'foresta infinita';
 const PDI_ESTERNI = ['aurenthar', 'lavenia'];
@@ -135,8 +135,7 @@ function costruisci(k1, k2, ctx = {}, pagine = {}) {
   const c1 = luoghi[k1];
   const c2 = luoghi[k2];
 
-  const ora = ctx.ora ?? Math.floor(Date.now() / 86400000);
-  const giorno = modulo(ora - 20453, 365);
+  const giorno = giornoArcamis(ctx);
   const gSt = (giorno + 10) % 365;
   const stagione = gSt < 91 ? 'Inverno' : gSt < 182 ? 'Primavera' : gSt < 273 ? 'Estate' : 'Autunno';
 
