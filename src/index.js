@@ -12,6 +12,7 @@ const R_MESSAGGIO = 4;
 const R_AGGIORNA = 7;
 const R_SUGGERIMENTI = 8;
 const R_MODULO = 9;
+const R_CANCELLA_MESSAGGIO = 6;
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
@@ -83,6 +84,9 @@ export default {
       }
 
       const id = String(i.data.custom_id || '');
+      if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
+  return json({ type: R_CANCELLA_MESSAGGIO });
+}
       const personale =
         id.startsWith('og|') ||
         id.startsWith('ogm|') ||
