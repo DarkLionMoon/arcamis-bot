@@ -60,31 +60,33 @@ export default {
    
 
     // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
-    if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
-      const id = String(i.data.custom_id || '');
-
-     
+    
       if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
+        // Conferma subito il clic del pulsante.
+        const conferma = json({ type: R_CANCELLA_MESSAGGIO });
+
+        // Elimina il messaggio effimero tramite il webhook Discord.
         const url =
           `https://discord.com/api/v10/webhooks/${i.application_id}` +
           `/${i.token}/messages/${i.message.id}`;
 
         try {
-          const risultato = await fetch(url, { method: 'DELETE' });
+          const eliminazione = await fetch(url, { method: 'DELETE' });
 
-          if (!risultato.ok) {
+          if (!eliminazione.ok) {
             console.error(
-              'Errore eliminazione messaggio effimero:',
-              risultato.status,
-              await risultato.text()
+              'Errore eliminazione messaggio:',
+              eliminazione.status,
+              await eliminazione.text()
             );
           }
         } catch (err) {
-          console.error('Errore durante la cancellazione:', err);
+          console.error('Errore eliminazione messaggio:', err);
         }
 
-        return json({ type: R_PONG });
+        return conferma;
       }
+
 
 
       let dati = null;
