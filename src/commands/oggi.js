@@ -53,20 +53,68 @@ export default {
   descrizione: 'Oggi ad Arcamis: giorno, stagione, luna, meteo e sessioni For Fun in arrivo',
   opzioni: [],
   run: (_opzioni, ctx = {}) => costruisci(ctx),
- async componente(id, _valori, ctx = {}) {
-  const parti = String(id).split('|');
 
-  if (parti[0] === 'og' && parti[1] === 'r') {
+async componente(id, _valori, ctx = {}) {
+  const [tipo, azione] = String(id).split('|');
+
+  if (tipo !== 'og' && tipo !== 'ogm') return null;
+
+  if (tipo === 'og' && azione === 'r') {
     return costruisci(ctx);
   }
 
-  if (parti[0] === 'ogm') {
-    // Per ora riconosciamo il pulsante, ma non mostriamo
-    // una schermata di dettaglio finché non implementiamo
-    // il collegamento ai dettagli simulati.
-    return costruisci(ctx);
+  if (tipo === 'ogm') {
+    const sezioni = [
+      'vento',
+      'atmosfera',
+      'soleluna',
+      'allerte',
+      'dettagli',
+    ];
+
+    if (!sezioni.includes(azione)) return null;
+
+    const g = giornoArcamis(ctx);
+    const dettaglio = bollettino.componente(
+      `bmd|arcamis|${g}|${azione}`,
+      [],
+      ctx
+    );
+
+    if (!dettaglio || !dettaglio.embeds?.[0]) {
+      return {
+        content: 'Non riesco a generare i dettagli meteo simulati.',
+        flags: 64,
+      };
+    }
+
+    const riepilogo = await costruisci(ctx);
+    const campiForFun = (riepilogo.embeds[0].fields || [])
+      .filter((f) =>
+        f.name.startsWith('🎲') ||
+        f.name.startsWith('📆')
+      );
+
+    return {
+      embeds: [{
+        ...dettaglio.embeds[0],
+        fields: campiForFun,
+      }],
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 2,
+            style: 2,
+            label: '↩ Torna a Oggi',
+            custom_id: 'og|r',
+          }],
+        },
+      ],
+    };
   }
 
   return null;
 },
+
 };
