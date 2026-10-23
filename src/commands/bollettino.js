@@ -21,6 +21,111 @@ const STILE = {
   Foschia: ['🌫️', 'bdc3c7', 'Una Foschia Mattutina'],
 };
 
+function dettagliSimulati(nome, temperatura, minima, g, zona) {
+  // Valori deterministici: stessa località e stesso giorno = stessi risultati.
+  const seed = (g * 7919 + zona * 104729 + 37) >>> 0;
+  const valore = (n) => {
+    const x = Math.sin(seed * 0.001 + n * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  };
+
+  const pioggia = ['Pioggia', 'Pioggia Forte', 'Tempesta'].includes(nome);
+  const tempesta = nome === 'Tempesta';
+  const neve = ['Neve', 'Bufera'].includes(nome);
+  const nebbia = ['Nebbia Fitta', 'Foschia'].includes(nome);
+  const sereno = ['Sole', 'Sereno'].includes(nome);
+
+  const ventoBase = tempesta || nome === 'Bufera' ? 24
+    : nome === 'Pioggia Forte' ? 17
+      : pioggia || nebbia || neve ? 11 : 6;
+
+  const vento = Math.round(ventoBase + valore(1) * 8);
+  const raffica = Math.round(vento * (1.15 + valore(2) * 0.45));
+  const direzioni = [
+    'Nord', 'Nord Nordest', 'Nordest', 'Est Nordest',
+    'Est', 'Est Sudest', 'Sudest', 'Sud Sudest',
+    'Sud', 'Sud Sudovest', 'Sudovest', 'Ovest Sudovest',
+    'Ovest', 'Ovest Nordovest', 'Nordovest', 'Nord Nordovest',
+  ];
+  const direzione = direzioni[Math.floor(valore(3) * direzioni.length)];
+
+  const umidita = Math.round(
+    nebbia ? 88 + valore(4) * 10
+      : pioggia || neve ? 75 + valore(4) * 20
+        : 40 + valore(4) * 35,
+  );
+
+  const copertura = Math.round(
+    sereno ? valore(5) * 20
+      : nebbia ? 80 + valore(5) * 20
+        : pioggia || neve ? 65 + valore(5) * 35
+          : 25 + valore(5) * 50,
+  );
+
+  const probabilitaPioggia = neve ? 65 + Math.round(valore(6) * 30)
+    : tempesta ? 80 + Math.round(valore(6) * 20)
+      : nome === 'Pioggia Forte' ? 70 + Math.round(valore(6) * 25)
+        : pioggia ? 45 + Math.round(valore(6) * 35)
+          : nebbia ? 10 + Math.round(valore(6) * 25)
+            : Math.round(valore(6) * 25);
+
+  const precipitazioni = neve ? 0
+    : tempesta ? 2 + valore(7) * 8
+      : nome === 'Pioggia Forte' ? 1 + valore(7) * 5
+        : pioggia ? valore(7) * 2
+          : 0;
+
+  const visibilita = nebbia ? 0.5 + valore(8) * 3
+    : tempesta || nome === 'Pioggia Forte' ? 2 + valore(8) * 5
+      : 8 + valore(8) * 2;
+
+  const uv = Math.round(
+    Math.max(0, Math.min(11, (temperatura + 5) / 4 * (1 - copertura / 120))),
+  ) / 1;
+
+  const puntoRugiada = Math.round(
+    (temperatura - (100 - umidita) / 5) * 10,
+  ) / 10;
+
+  const sensazione = Math.round(
+    temperatura - (vento > 15 ? (vento - 15) * 0.12 : 0),
+  );
+
+  const mediaUmidita = Math.max(25, Math.min(100, umidita + Math.round((valore(9) - 0.5) * 16)));
+
+  // Orari simulati, con variazioni stagionali leggere.
+  const alba = 6 * 60 + 30 + Math.round(valore(10) * 100);
+  const tramonto = 17 * 60 + 30 + Math.round(valore(11) * 100);
+  const orario = (minuti) =>
+    `${String(Math.floor(minuti / 60) % 24).padStart(2, '0')}:${String(minuti % 60).padStart(2, '0')}`;
+
+  const faseIndice = Math.floor((g % 28) / 7);
+  const fasiLunari = ['Luna Nuova', 'Primo Quarto', 'Luna Piena', 'Ultimo Quarto'];
+  const illuminazione = [2, 50, 97, 50][faseIndice] + Math.round(valore(12) * 3);
+
+  const allerte = [];
+  if (tempesta) allerte.push('⛈️ **Temporale simulato:** possibili raffiche intense e precipitazioni');
+  if (nome === 'Pioggia Forte') allerte.push('🌧️ **Pioggia intensa:** prudenza negli spostamenti');
+  if (raffica >= 25) allerte.push('💨 **Raffiche sostenute:** attenzione nelle zone esposte');
+  if (nebbia && visibilita < 3) allerte.push('🌫️ **Visibilità ridotta:** procedere con cautela');
+  if (neve) allerte.push('❄️ **Neve simulata:** possibili difficoltà negli spostamenti');
+  if (temperatura >= 32) allerte.push('🥵 **Caldo elevato:** idratarsi e limitare gli sforzi');
+  if (temperatura <= 0) allerte.push('🥶 **Gelo simulato:** attenzione alle superfici fredde');
+
+  return {
+    vento, raffica, direzione, umidita, mediaUmidita, copertura,
+    probabilitaPioggia, precipitazioni: precipitazioni.toFixed(1),
+    visibilita: visibilita.toFixed(1), uv, puntoRugiada, sensazione,
+    temperatura, minima, massima: temperatura + Math.round(valore(13) * 5),
+    alba: orario(alba), tramonto: orario(tramonto),
+    levataLuna: orario(17 * 60 + Math.round(valore(14) * 180)),
+    tramontoLuna: orario(3 * 60 + Math.round(valore(15) * 180)),
+    faseLunare: fasiLunari[faseIndice],
+    illuminazione: Math.min(100, illuminazione),
+    allerte,
+  };
+}
+
 const nomi = Object.values(luoghi).map((x) => x[0]);
 const chiaveDi = (nome) => Object.keys(luoghi).find((k) => luoghi[k][0] === nome);
 const elenco = Object.entries(luoghi).sort((a, b) => a[1][0].localeCompare(b[1][0], 'it'));
@@ -109,6 +214,67 @@ function costruisci(chiave, g, ctx = {}, nota = '') {
 
 // Menu per cambiare luogo e pulsanti per il giorno. Id: bol|<giorno> (menu), bog|<luogo>|<giorno>|-/0/+ (pulsanti).
 // Discord ammette al massimo 25 voci per menu: oltre, servirebbe un menu a pagine (vedi /itinerario).
+
+function testoSezione(sezione, d) {
+  const vento = [
+    `**Velocità:** ${d.vento} km/h`,
+    `**Direzione:** ${d.direzione}`,
+    `**Velocità massima:** ${d.raffica} km/h`,
+    `**Raffiche:** ${d.raffica} km/h`,
+    `**Windchill:** ${d.sensazione}°C`,
+  ].join('\n');
+
+  const atmosfera = [
+    `**Umidità:** ${d.umidita}%`,
+    `**Umidità media:** ${d.mediaUmidita}%`,
+    `**Punto di rugiada:** ${d.puntoRugiada}°C`,
+    `**Precipitazioni:** ${d.precipitazioni} mm`,
+    `**Copertura nuvolosa:** ${d.copertura}%`,
+    `**Visibilità:** ${d.visibilita} km`,
+    `**Indice UV:** ${d.uv}`,
+    `**Probabilità di pioggia:** ${d.probabilitaPioggia}%`,
+  ].join('\n');
+
+  const soleLuna = [
+    `**Alba:** ${d.alba}`,
+    `**Tramonto:** ${d.tramonto}`,
+    `**Levata lunare:** ${d.levataLuna}`,
+    `**Tramonto lunare:** ${d.tramontoLuna}`,
+    `**Fase lunare:** ${d.faseLunare}`,
+    `**Illuminazione:** ${d.illuminazione}%`,
+  ].join('\n');
+
+  const allerte = d.allerte.length
+    ? d.allerte.join('\n\n')
+    : '✅ Nessuna allerta simulata per queste condizioni.';
+
+  const riepilogo = [
+    `**Condizioni:** ${d.temperatura}°C`,
+    `**Percepita:** ${d.sensazione}°C`,
+    `**Massima simulata:** ${d.massima}°C`,
+    `**Minima:** ${d.minima}°C`,
+    `**Pioggia:** ${d.probabilitaPioggia}%`,
+    `**Vento:** ${d.vento} km/h da ${d.direzione}`,
+    `**Raffiche:** ${d.raffica} km/h`,
+    `**Umidità:** ${d.umidita}%`,
+    `**Punto di rugiada:** ${d.puntoRugiada}°C`,
+    `**Precipitazioni:** ${d.precipitazioni} mm`,
+    `**Nuvole:** ${d.copertura}%`,
+    `**Visibilità:** ${d.visibilita} km`,
+    `**UV:** ${d.uv}`,
+    `**Alba / tramonto:** ${d.alba} / ${d.tramonto}`,
+    `**Luna:** ${d.faseLunare} · ${d.illuminazione}%`,
+  ].join('\n');
+
+  return ({
+    vento: ['💨 Vento', vento],
+    atmosfera: ['🌫️ Atmosfera', atmosfera],
+    soleluna: ['🌙 Sole / Luna', soleLuna],
+    allerte: ['⚠️ Allerte meteo', allerte],
+    dettagli: ['🌦️ Tutti i dettagli', riepilogo],
+  })[sezione];
+}
+
 function componenti(chiave, g, ctx) {
   const tasto = (op, label, disabled = false) => ({
     type: 2, style: 2, label, disabled, custom_id: `bog|${chiave}|${g}|${op}`,
@@ -130,6 +296,23 @@ function componenti(chiave, g, ctx) {
         },
       ],
     },
+    
+    {
+      type: 1,
+      components: [
+        { type: 2, style: 2, label: '💨 Vento', custom_id: `bmd|${chiave}|${g}|vento` },
+        { type: 2, style: 2, label: '🌫️ Atmosfera', custom_id: `bmd|${chiave}|${g}|atmosfera` },
+        { type: 2, style: 2, label: '🌙 Sole / Luna', custom_id: `bmd|${chiave}|${g}|soleluna` },
+      ],
+    },
+    {
+      type: 1,
+      components: [
+        { type: 2, style: 2, label: '⚠️ Allerte', custom_id: `bmd|${chiave}|${g}|allerte` },
+        { type: 2, style: 2, label: '🌦️ Tutti i dettagli', custom_id: `bmd|${chiave}|${g}|dettagli` },
+      ],
+    },
+
     {
       type: 1,
       components: [tasto('-', '◀ Giorno prima'), tasto('0', 'Oggi', g === giornoOggi(ctx)), tasto('+', 'Giorno dopo ▶')],
@@ -170,6 +353,65 @@ export default {
 
   // Clic su menu o pulsanti: messaggio aggiornato, errore (flags 64) o null se l'id non è di questo comando.
   componente(id, valori = [], ctx = {}) {
+    
+    const parti = String(id).split('|');
+
+    if (parti[0] === 'bmd') {
+      const [, chiave, giorno, sezione] = parti;
+      const g = Number(giorno);
+
+      if (!luoghi[chiave] || !Number.isInteger(g)) {
+        return errore('Località o giorno non riconosciuti.');
+      }
+
+      const base = costruisci(chiave, g, ctx);
+      const titolo = base.embeds[0].title;
+      const descrizione = base.embeds[0].description;
+
+      // Recupera i valori già usati dal riepilogo simulato.
+      const temperatura = Number(
+        descrizione.match(/\*\*(-?\d+)°C\*\*/)?.[1] ?? 15,
+      );
+      const minima = Number(
+        descrizione.match(/\/ (-?\d+)°C/)?.[1] ?? temperatura - 5,
+      );
+
+      const nome = Object.keys(STILE).find(
+        (k) => titolo.includes(STILE[k][2]),
+      ) ?? 'Sereno';
+
+      const dati = dettagliSimulati(
+        nome, temperatura, minima, g, luoghi[chiave][2],
+      );
+
+      const [titoloSezione, testo] = testoSezione(sezione, dati) ?? [
+        'Meteo', 'Sezione non riconosciuta.',
+      ];
+
+      return {
+        embeds: [{
+          title: `${titoloSezione} — ${luoghi[chiave][0]}`,
+          description: testo,
+          color: base.embeds[0].color,
+          footer: {
+            text: `Arcamis 2026 · Dati meteo simulati · ${g}`,
+          },
+        }],
+        components: [
+          {
+            type: 1,
+            components: [{
+              type: 2,
+              style: 2,
+              label: '↩ Riepilogo',
+              custom_id: `bog|${chiave}|${g}|0`,
+            }],
+          },
+          ...base.components,
+        ],
+      };
+    }
+
     const [tipo, x, y, z] = String(id).split('|');
     let chiave;
     let g;
