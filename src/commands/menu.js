@@ -6,7 +6,6 @@ import pdi from './pdi.js';
 import bollettino from './bollettino.js';
 import necrologio from './necrologio.js';
 import forfun from './forfun.js';
-import locanda from './locanda.js';
 import { embed, errore } from '../util.js';
 
 const HOME_ROW = {
@@ -45,8 +44,6 @@ function pannello() {
         type: 1,
         components: [
           { type: 2, style: 2, label: '🎲 For Fun', custom_id: 'menu|forfun' },
-          { type: 2, style: 2, label: '🏨 Locanda', custom_id: 'menu|locanda' },
-          { type: 2, style: 2, label: '📜 Regole', custom_id: 'menu|regole' },
           { type: 2, style: 2, label: '❔ Aiuto', custom_id: 'menu|aiuto' },
         ],
       },
@@ -93,8 +90,6 @@ function guidaAiuto() {
           '`/bollettino` — meteo di una località e di un giorno.',
           '`/necrologio` — registro dei caduti.',
           '`/forfun` — proponi una sessione For Fun.',
-          '`/locanda` — consulta le locande.',
-          '`/regole` — leggi le regole del server.',
         ].join('\n'),
         colore: '#c9a227',
         footer: 'Arcamis 2026',
@@ -110,12 +105,6 @@ const azioni = {
   bollettino: (_valori, ctx) => bollettino.run({}, ctx),
   necrologio: (_valori, ctx) => necrologio.run({}, ctx),
   forfun: (_valori, ctx) => forfun.run({}, ctx),
-  locanda: () => locanda.run({}),
-  itinerario: () => guidaItinerario(),
-  regole: () => ({ embeds: [embed(semplici.regole?.embed ?? {
-    titolo: 'Regolamento di Arcamis',
-    descrizione: 'Il regolamento non è configurato.',
-  })], components: [HOME_ROW] }),
   aiuto: () => guidaAiuto(),
 };
 
