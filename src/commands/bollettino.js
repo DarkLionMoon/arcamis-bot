@@ -404,7 +404,7 @@ export default {
               type: 2,
               style: 2,
               label: '↩ Riepilogo',
-              custom_id: `bog|${chiave}|${g}|0`,
+              custom_id: `bmr|${chiave}|${g}`,
             }],
           },
           ...base.components,
@@ -413,6 +413,20 @@ export default {
     }
 
     const [tipo, x, y, z] = String(id).split('|');
+    if (tipo === 'bmr') {
+  const chiaveRitorno = x;
+  const giornoRitorno = Number(y);
+
+  if (!luoghi[chiaveRitorno] || !Number.isInteger(giornoRitorno)) {
+    return errore('Località o giorno non riconosciuti.');
+  }
+
+  return costruisci(
+    chiaveRitorno,
+    modulo(giornoRitorno, 365),
+    ctx
+  );
+}
     let chiave;
     let g;
     if (tipo === 'bol') {
