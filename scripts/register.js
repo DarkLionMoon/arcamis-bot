@@ -33,8 +33,14 @@ const guildIds = DISCORD_GUILD_ID
 
 for (const guildId of guildIds) {
   const url = guildId
-    ? `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/guilds/${guildId}/commands`
-    : `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/commands`;
+  ? 'https://discord.com/api/v10/applications/' +
+    DISCORD_APPLICATION_ID +
+    '/guilds/' +
+    guildId +
+    '/commands'
+  : 'https://discord.com/api/v10/applications/' +
+    DISCORD_APPLICATION_ID +
+    '/commands';
 
   const res = await fetch(url, {
     method: 'PUT',
