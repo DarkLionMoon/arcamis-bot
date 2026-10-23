@@ -6,10 +6,11 @@ import forfun from './commands/forfun.js';
 import oggi from './commands/oggi.js';
 import necrologio from './commands/necrologio.js';
 import pdi from './commands/pdi.js';
+import menu from './commands/menu.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { locanda, itinerario, pdi, bollettino, oggi, necrologio, forfun };
+const gestori = { menu, locanda, itinerario, pdi, bollettino, oggi, necrologio, forfun };
 
 export { promemoria } from './commands/forfun.js';
 
