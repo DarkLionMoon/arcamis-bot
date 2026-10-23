@@ -4,6 +4,7 @@ import luoghi from '../../data/luoghi.json' with { type: 'json' };
 import meteo from '../../data/meteo.json' with { type: 'json' };
 import velocita from '../../data/velocita.json' with { type: 'json' };
 import prezzi from '../../data/prezzi.json' with { type: 'json' };
+import datiPdi from '../../data/pdi.json' with { type: 'json' };
 import { embed, errore, trovaNome, suggerimenti, giornoArcamis } from '../util.js';
 
 const CHIAVE_GATEWAY = 'foresta infinita';
@@ -24,6 +25,11 @@ const SEP = '▱'.repeat(20);
 
 const nomiLuoghi = Object.values(luoghi).map((x) => x[2]);
 const luogoPerNome = (nome) => Object.entries(luoghi).find(([, x]) => x[2] === nome);
+const chiaviPdi = new Set(
+  Object.values(datiPdi.regioni).flatMap(
+    (regione) => Object.keys(regione.pdi),
+  ),
+);
 
 // --- Meteo deterministico (LCG a doppio seme) ---
 // Si usa BigInt perché s * 1103515245 supera 2^53: con i numeri normali di JS il risultato sarebbe sbagliato.
@@ -127,6 +133,30 @@ function componenti(k1, k2, pd, pa) {
       ],
     });
   }
+   const ritorniPdi = [];
+
+  if (chiaviPdi.has(k1)) {
+    ritorniPdi.push({
+      type: 2,
+      style: 2,
+      label: '📍 PDI partenza',
+      custom_id: `pdit|${k1}`,
+    });
+  }
+
+  if (chiaviPdi.has(k2)) {
+    ritorniPdi.push({
+      type: 2,
+      style: 2,
+      label: '📍 PDI destinazione',
+      custom_id: `pdit|${k2}`,
+    });
+  }
+
+  if (ritorniPdi.length) {
+    righe.push({ type: 1, components: ritorniPdi });
+  }
+
   return righe;
 }
 
