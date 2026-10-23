@@ -121,7 +121,9 @@ export default {
       const id = String(i.data?.custom_id || '');
 
       // Pulsante "Menu principale": prova a eliminare il messaggio.
-      if (id.startsWith('bmr|')) {
+      if (id === 'menu|home' && (i.message?.flags & 64)) {
+  return json({ type: R_CANCELLA_MESSAGGIO });
+}
         console.log('Pulsante bmr premuto:', {
           id,
           application_id: i.application_id,
