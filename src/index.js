@@ -69,9 +69,21 @@ export default {
         return json({ type: R_MESSAGGIO, data: { content: 'Questo messaggio non è più valido: rilancia il comando.', flags: 64 } });
       }
       if (dati.modale) return json({ type: R_MODULO, data: dati.modale });
-      // Errore: risposta privata. Altrimenti si aggiorna il messaggio esistente.
-      if (dati.flags === 64) return json({ type: R_MESSAGGIO, data: dati });
-      return json({ type: R_AGGIORNA, data: { ...dati, allowed_mentions: { parse: [] } } });
+  // Dal menu pubblico crea una risposta effimera.
+// Se il messaggio è già effimero, aggiorna quello privato.
+if (dati.flags === 64 && !(i.message?.flags & 64)) {
+  return json({
+    type: R_MESSAGGIO,
+    data: { ...dati, allowed_mentions: { parse: [] } },
+  });
+}
+
+const { flags: _flags, ...risposta } = dati;
+
+return json({
+  type: R_AGGIORNA,
+  data: { ...risposta, allowed_mentions: { parse: [] } },
+});
     }
 
     if (i.type === COMANDO) {
