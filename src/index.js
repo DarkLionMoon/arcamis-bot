@@ -159,7 +159,7 @@ export default {
         });
       }
 
-      return json({
+            return json({
         type: R_AGGIORNA,
         data: {
           ...risposta,
@@ -168,8 +168,8 @@ export default {
       });
     }
 
-      
     if (i.type === COMANDO) {
+  
       let dati;
       try {
         dati = await esegui(i.data.name, i.data.options, { i, env });
@@ -192,6 +192,6 @@ export default {
       });
     }
 
-    return new Response('Tipo di interazione non gestito', { status: 400 });
+        return new Response('Tipo di interazione non gestito', { status: 400 });
   },
 };
