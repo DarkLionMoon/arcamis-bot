@@ -34,7 +34,7 @@ function pagineDi(chiave) {
   const usati = new Set();
   dati.gruppi.forEach((g, gi) => {
     for (const [k, v] of Object.entries(reg.pdi)) {
-      if (g.tipi.includes(v.tipo)) {
+      if (g.tipi.includes(v.gruppo ?? v.tipo)) { // "gruppo" (facoltativo) sposta un luogo in un altro blocco senza cambiarne il tipo
         voci.push({ k, v, gi, testo: riga(k, v) });
         usati.add(k);
       }
