@@ -337,17 +337,23 @@ async function pubblica(valori, { i, env }) {
 }
 
 // ---------- Gestione del proprio post ----------
+
+const RUOLO_STAFF = '1466423989328154644';
+
 const puoGestire = (i, proponenteId) => {
-  const utente = (i.member?.user ?? i.user).id;
-  if (utente === proponenteId) return true;
-  try {
-    const p = BigInt(i.member?.permissions ?? 0);
-    return (p & 0x8n) !== 0n || (p & 0x2000n) !== 0n; // Amministratore o Gestisci messaggi
-  } catch {
-    return false;
-  }
+  const utente = (i.member?.user ?? i.user)?.id;
+
+  // Chi ha creato la sessione può gestire la propria.
+  if (utente && utente === proponenteId) return true;
+
+  // Lo staff può gestire tutte le sessioni.
+  const ruoli = i.member?.roles ?? [];
+  return Array.isArray(ruoli) && ruoli.includes(RUOLO_STAFF);
 };
-const NON_AUTORIZZATO = 'Solo chi ha proposto la sessione, o lo staff, può gestirla.';
+
+const NON_AUTORIZZATO =
+  'Solo chi ha proposto la sessione, o un membro dello staff, può gestirla.';
+
 const urlPost = (i, env, id) => `https://discord.com/channels/${i.guild_id}/${env.FORFUN_CANALE}/${id}`;
 
 async function leggiPost(env, id) {
