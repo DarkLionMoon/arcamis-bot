@@ -52,13 +52,12 @@ for (const guildId of guildIds) {
 });
 
   if (!res.ok) {
-    console.error(
-      `Errore ${res.status} (${guildId ?? 'global'}):`,
-      await res.text()
-    );
-    process.exit(1);
-  }
-
+  console.error(
+    'Errore ' + res.status + ' (' + (guildId || 'global') + '):',
+    await res.text()
+  );
+  process.exit(1);
+}
   const registrati = await res.json();
 
   console.log(
