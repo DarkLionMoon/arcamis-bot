@@ -61,7 +61,7 @@ export default {
     // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
     if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
       
-      const id = String(i.data.custom_id || '');
+      const customId = String(i.data.custom_id || '');
 
       if (id.startsWith('bmr|') && (i.message?.flags & 64)) {
         const url =
