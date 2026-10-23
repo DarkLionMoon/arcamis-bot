@@ -249,16 +249,15 @@ export default {
       }
 
       // Comportamento predefinito: aggiorna il messaggio del componente.
-      return json({
+           return json({
         type: R_AGGIORNA,
         data: {
           ...risposta,
           allowed_mentions: { parse: [] },
         },
       });
-    }
+    } // Chiude il blocco COMPONENTE / INVIO_MODULO
 
-    // Esecuzione dei comandi slash.
     if (i.type === COMANDO) {
       let dati;
 
@@ -292,7 +291,7 @@ export default {
       });
     }
 
-    return new Response('Tipo di interazione non gestito', {
+       return new Response('Tipo di interazione non gestito', {
       status: 400,
     });
   },
