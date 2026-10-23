@@ -63,7 +63,7 @@ function conRitorno(risultato) {
   if (!componenti.some((riga) => (riga.components ?? []).some((c) => c.custom_id === 'menu|home'))) {
     componenti.push(HOME_ROW);
   }
-  return { ...risultato, components: componenti };
+  return { ...risultato, components: componenti, flags: 64 };
 }
 
 function guidaItinerario() {
