@@ -25,7 +25,26 @@ async function costruisci(ctx = {}) {
   }
   return {
     embeds: [{ ...e, title: '🗓️ Oggi ad Arcamis', description: `**${e.title}**\n${e.description}`, fields: campi }],
-    components: [{ type: 1, components: [{ type: 2, style: 2, label: '🔄 Aggiorna', custom_id: 'og|r' }] }],
+    
+components: [
+  {
+    type: 1,
+    components: [
+      { type: 2, style: 2, label: '🔄 Aggiorna', custom_id: 'og|r' },
+      { type: 2, style: 2, label: '💨 Vento', custom_id: 'ogm|vento' },
+      { type: 2, style: 2, label: '🌫️ Atmosfera', custom_id: 'ogm|atmosfera' },
+    ],
+  },
+  {
+    type: 1,
+    components: [
+      { type: 2, style: 2, label: '🌙 Sole / Luna', custom_id: 'ogm|soleluna' },
+      { type: 2, style: 2, label: '⚠️ Allerte', custom_id: 'ogm|allerte' },
+      { type: 2, style: 2, label: '🌦️ Tutti i dettagli', custom_id: 'ogm|dettagli' },
+    ],
+  },
+],
+
   };
 }
 
