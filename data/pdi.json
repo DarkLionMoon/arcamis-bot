@@ -5,7 +5,8 @@
     "Foresta": "🌲",
     "Palude": "🌫️",
     "Rovine": "🏚️",
-    "Lago": "🌊"
+    "Lago": "🌊",
+    "Pianura": "🌾"
   },
   "icone_pericolo": {
     "Sicuro": "🟢",
@@ -30,6 +31,12 @@
       "titolo": "🏰 ═══ FORTEZZE ═══",
       "tipi": [
         "Fortezza"
+      ]
+    },
+    {
+      "titolo": "🌾 ═══ PIANURE ═══",
+      "tipi": [
+        "Pianura"
       ]
     },
     {
@@ -78,13 +85,6 @@
           "pericolo": "Moderato",
           "lord": "Lord Harven Duskmore",
           "note": "Famosa per l'estrazione del ferro. Gli operai sono spesso in agitazione."
-        },
-        "vallespiga": {
-          "tipo": "Citta",
-          "desc": "Citta collinare circondata da vigneti e campi coltivati.",
-          "pericolo": "Sicuro",
-          "lord": "Lord Oren Callister",
-          "note": "Produce il miglior vino del marchesato. Mercato agricolo ogni settimana."
         },
         "vigilius": {
           "tipo": "Fortezza",
@@ -142,12 +142,27 @@
           "lord": "Nessuno",
           "note": "Luogo maledetto secondo la tradizione locale. Cercatori di tesori raramente tornano."
         },
+        "passo di julius": {
+          "tipo": "Pianura",
+          "desc": "Pianura generica, attraversata dal passo.",
+          "pericolo": "Sicuro",
+          "lord": "Nessuno",
+          "note": ""
+        },
         "passo di nyssus": {
-          "tipo": "Foresta",
+          "tipo": "Pianura",
           "desc": "Pianura generica, abbastanza incontaminata.",
           "pericolo": "Sicuro",
           "lord": "Nessuno",
           "note": "Passaggio per carri."
+        },
+        "vallespiga": {
+          "tipo": "Citta",
+          "desc": "Citta collinare circondata da vigneti e campi coltivati.",
+          "pericolo": "Sicuro",
+          "lord": "Lord Oren Callister",
+          "note": "Produce il miglior vino del marchesato. Mercato agricolo ogni settimana.",
+          "gruppo": "Pianura"
         }
       }
     }
