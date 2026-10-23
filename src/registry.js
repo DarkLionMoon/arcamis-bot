@@ -1,5 +1,4 @@
 import semplici from '../data/comandi.json' with { type: 'json' };
-import locanda from './commands/locanda.js';
 import itinerario from './commands/itinerario.js';
 import bollettino from './commands/bollettino.js';
 import forfun from './commands/forfun.js';
@@ -10,7 +9,7 @@ import menu from './commands/menu.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { menu, locanda, itinerario, pdi, bollettino, oggi, necrologio, forfun };
+const gestori = { menu, itinerario, pdi, bollettino, oggi, necrologio, forfun };
 
 export { promemoria } from './commands/forfun.js';
 
