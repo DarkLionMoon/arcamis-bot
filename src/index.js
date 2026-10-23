@@ -56,24 +56,32 @@ export default {
       return json({ type: R_SUGGERIMENTI, data: { choices: suggerisci(i.data.name, i.data.options) } });
     }
 
+   
     // Clic su menu o pulsanti, e invio dei moduli (finestre di testo).
     if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
       let dati = null;
+
       try {
         const valori = i.type === INVIO_MODULO ? i.data.components : i.data.values;
         dati = await componente(i.data.custom_id, valori, { i, env });
       } catch (err) {
         console.error('Errore nel componente:', err);
       }
-      if (!dati) {
-        return json({ type: R_MESSAGGIO, data: { content: 'Questo messaggio non è più valido: rilancia il comando.', flags: 64 } });
-      }
-      if (dati.modale) return json({ type: R_MODULO, data: dati.modale });
-  // Dal menu pubblico crea una risposta effimera.
 
-      // Se il componente richiede una risposta effimera, apri una schermata privata.
-      
-      // I componenti di Oggi, Bollettino e Itinerario aprono una schermata privata.
+      if (!dati) {
+        return json({
+          type: R_MESSAGGIO,
+          data: {
+            content: 'Questo messaggio non è più valido: rilancia il comando.',
+            flags: 64,
+          },
+        });
+      }
+
+      if (dati.modale) {
+        return json({ type: R_MODULO, data: dati.modale });
+      }
+
       const id = String(i.data.custom_id || '');
       const personale =
         id.startsWith('og|') ||
@@ -86,49 +94,51 @@ export default {
         id.startsWith('ita|') ||
         id.startsWith('itp|');
 
+      const { flags: _flags, ...risposta } = dati;
+
+      // Primo clic dal messaggio pubblico: crea una risposta privata.
       if (personale && !(i.message?.flags & 64)) {
-        const { flags: _flags, ...contenuto } = dati;
         return json({
           type: R_MESSAGGIO,
           data: {
-            ...contenuto,
+            ...risposta,
             flags: 64,
             allowed_mentions: { parse: [] },
           },
         });
       }
 
-      if (dati.flags === 64) {
-        if (i.message?.flags & 64) {
-          const { flags: _flags, ...risposta } = dati;
-          return json({
-            type: R_AGGIORNA,
-            data: { ...risposta, allowed_mentions: { parse: [] } },
-          });
-        }
-
+      // Se il messaggio è già privato, aggiorna soltanto quello.
+      if (personale && (i.message?.flags & 64)) {
         return json({
-          type: R_MESSAGGIO,
-          data: { ...dati, allowed_mentions: { parse: [] } },
+          type: R_AGGIORNA,
+          data: {
+            ...risposta,
+            allowed_mentions: { parse: [] },
+          },
         });
       }
 
-      const { flags: _flags, ...risposta } = dati;
-      return json({
-        type: R_AGGIORNA,
-        data: { ...risposta, allowed_mentions: { parse: [] } },
-      });
-
+      // Comportamento originale per gli altri componenti.
+      if (dati.flags === 64) {
+        return json({
+          type: R_MESSAGGIO,
+          data: {
+            ...dati,
+            allowed_mentions: { parse: [] },
+          },
+        });
       }
 
-      // Per gli altri componenti mantieni il comportamento attuale.
-      const { flags: _flags, ...risposta } = dati;
       return json({
         type: R_AGGIORNA,
-        data: { ...risposta, allowed_mentions: { parse: [] } },
+        data: {
+          ...risposta,
+          allowed_mentions: { parse: [] },
+        },
       });
-
     }
+
 
     if (i.type === COMANDO) {
       let dati;
