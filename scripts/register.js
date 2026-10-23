@@ -1,8 +1,7 @@
-```js
+js
 // Registra gli slash command su Discord.
-// Con DISCORD_GUILD_ID puoi indicare più server separati da virgola.
-// Senza DISCORD_GUILD_ID, i comandi diventano globali.
-// --dry stampa le definizioni senza inviare nulla.
+// DISCORD_GUILD_ID può contenere più ID separati da virgola.
+// Se è assente, i comandi vengono registrati globalmente.
 
 import { definizioni } from '../src/registry.js';
 
@@ -21,9 +20,7 @@ const {
 } = process.env;
 
 if (!DISCORD_TOKEN || !DISCORD_APPLICATION_ID) {
-  console.error(
-    'Servono le variabili DISCORD_TOKEN e DISCORD_APPLICATION_ID.'
-  );
+  console.error('Servono DISCORD_TOKEN e DISCORD_APPLICATION_ID.');
   process.exit(1);
 }
 
@@ -32,38 +29,37 @@ const guildIds = DISCORD_GUILD_ID
   : [null];
 
 for (const guildId of guildIds) {
-  const url = guildId
-  ? 'https://discord.com/api/v10/applications/' +
-    DISCORD_APPLICATION_ID +
-    '/guilds/' +
-    guildId +
-    '/commands'
-  : 'https://discord.com/api/v10/applications/' +
-    DISCORD_APPLICATION_ID +
-    '/commands';
+  let url = 'https://discord.com/api/v10/applications/' +
+    DISCORD_APPLICATION_ID;
+
+  if (guildId) {
+    url += '/guilds/' + guildId + '/commands';
+  } else {
+    url += '/commands';
+  }
 
   const res = await fetch(url, {
-  method: 'PUT',
-  headers: {
-    Authorization: 'Bot ' + DISCORD_TOKEN,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(defs),
-});
+    method: 'PUT',
+    headers: {
+      Authorization: 'Bot ' + DISCORD_TOKEN,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(defs),
+  });
 
   if (!res.ok) {
-  console.error(
-    'Errore ' + res.status + ' (' + (guildId || 'global') + '):',
-    await res.text()
-  );
-  process.exit(1);
-}
+    console.error(
+      'Errore ' + res.status + ' (' + (guildId || 'global') + '):',
+      await res.text()
+    );
+    process.exit(1);
+  }
+
   const registrati = await res.json();
 
   console.log(
-  'Registrati ' + registrati.length + ' comandi ' +
-  (guildId ? 'sul server ' + guildId : '(globali)') +
-  ': ' + registrati.map((c) => '/' + c.name).join(', ')
-);
+    'Registrati ' + registrati.length + ' comandi ' +
+    (guildId ? 'sul server ' + guildId : '(globali)') +
+    ': ' + registrati.map((c) => '/' + c.name).join(', ')
+  );
 }
-```
