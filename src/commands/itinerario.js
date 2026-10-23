@@ -176,7 +176,7 @@ function costruisci(k1, k2, ctx = {}, pagine = {}) {
   const tsTerra = velocita.ts_terra ?? 8;
   const tsCavallo = velocita.ts_cavallo ?? 4;
   const treno = velocita.treno ?? 25;
-  const trenoVisibile = Boolean(velocita.treno_visibile);
+  const trenoVisibile = false;
   const icona = (nome) => ICONE[nome] ?? '🌥️';
 
   // Un PDI esterno (Aurenthar, Lavenia) si raggiunge sempre passando da Foresta Infinita.
