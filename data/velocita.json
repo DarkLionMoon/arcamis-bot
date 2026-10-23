@@ -7,5 +7,5 @@
   "ts_cavallo": 4,
   "treno": 25,
   "ts_treno": 2,
-  "treno_visibile": true
+  "treno_visibile": false
 }
