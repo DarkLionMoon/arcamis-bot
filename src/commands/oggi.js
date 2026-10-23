@@ -1,6 +1,7 @@
 // /oggi: una sola schermata con giorno, stagione, luna e meteo di Arcamis (dal bollettino) + sessioni For Fun in arrivo.
 // Il meteo è esattamente quello di /bollettino, che resta com'è.
 import bollettino from './bollettino.js';
+import { giornoArcamis } from '../util.js';
 import { sessioniInArrivo } from './forfun.js';
 
 const riga = (s, i, env) =>
