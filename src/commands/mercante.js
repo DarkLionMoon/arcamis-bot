@@ -8,6 +8,21 @@ const OGG = dati.oggetti ?? [];
 const PER_PAGINA = 25;
 const COLORE = '#c9a227';
 
+// Solo i DM: chi ha il ruolo indicato in MERCANTE_RUOLO (variabile in wrangler.toml); se non è impostata,
+// chi ha i permessi di staff (Amministratore o Gestire i messaggi). Senza `ctx.i` (test) il controllo è saltato.
+function autorizzato(ctx = {}, env = {}) {
+  const i = ctx.i;
+  if (!i) return true;
+  const ruolo = env.MERCANTE_RUOLO;
+  if (ruolo && !String(ruolo).startsWith('INCOLLA')) return (i.member?.roles ?? []).includes(String(ruolo));
+  try {
+    const perm = BigInt(i.member?.permissions ?? 0);
+    return (perm & 0x8n) !== 0n || (perm & 0x2000n) !== 0n;
+  } catch {
+    return false;
+  }
+}
+
 const ETICHETTE = {
   weapon: 'Armi',
   armor: 'Armature',
@@ -209,7 +224,8 @@ export default {
   },
 
   // Risposta privata (flag 64): le schede non intasano il canale; i clic successivi aggiornano lo stesso messaggio.
-  run({ nome, categoria } = {}) {
+  run({ nome, categoria } = {}, ctx = {}) {
+    if (!autorizzato(ctx, ctx.env)) return errore('Il Mercante è riservato ai DM.');
     if (OGG.length === 0) {
       return errore('Il catalogo è vuoto: lo staff deve avviare l\'azione "Importa catalogo mercante" su GitHub.');
     }
@@ -235,9 +251,10 @@ export default {
     return { ...vista, flags: vista.flags ?? 64 };
   },
 
-  componente(id, valori = []) {
+  componente(id, valori = [], ctx = {}) {
     const [pre, op, cat, pag, q] = String(id).split('|');
     if (pre !== 'mer') return null;
+    if (!autorizzato(ctx, ctx.env)) return errore('Il Mercante è riservato ai DM.');
     if (op === 'h') return vistaCategorie();
     if (op === 'c') return vistaLista(valori[0], 0, '');
     if (op === 'l') return vistaLista(cat, pag, q);
