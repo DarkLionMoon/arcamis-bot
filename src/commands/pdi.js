@@ -2,6 +2,7 @@
 // Dati: data/pdi.json. Per aggiungere una regione: nuova voce in "regioni" con "nome" e "pdi" (stessi campi di Arcamis).
 // Se una regione ha tanti luoghi, l'elenco si divide da solo in pagine (limiti di Discord: 6000 caratteri per messaggio, 25 voci per menu).
 import dati from '../../data/pdi.json' with { type: 'json' };
+import itinerario from './itinerario.js';
 import { embed, errore, trovaNome, suggerimenti } from '../util.js';
 
 const SEP = '▱'.repeat(20);
@@ -204,9 +205,25 @@ function dettaglio(chiave, k) {
       }),
     ],
     components: [
-      ...(pagine[pagina] ? [menuLuoghi(chiave, pagina, pagine[pagina], k)] : []),
-      { type: 1, components: [{ type: 2, style: 2, label: `◀ ${reg.nome}`.slice(0, 80), custom_id: `pdl|${chiave}|${pagina}` }] },
+  ...(pagine[pagina] ? [menuLuoghi(chiave, pagina, pagine[pagina], k)] : []),
+  {
+    type: 1,
+    components: [
+      {
+        type: 2,
+        style: 2,
+        label: `◀ ${reg.nome}`.slice(0, 80),
+        custom_id: `pdl|${chiave}|${pagina}`,
+      },
+      {
+        type: 2,
+        style: 1,
+        label: '🧭 Itinerario da Arcamis',
+        custom_id: `pdiit|${chiave}|${k}`,
+      },
     ],
+  },
+],
   };
 }
 
@@ -257,8 +274,26 @@ export default {
   },
 
   // pdr = cambio regione, pds = scelta di un luogo, pdp = cambio pagina, pdl = torna all'elenco della regione.
-  componente(id, valori = []) {
+  componente(id, valori = [], ctx = {}) {
     const [tipo, chiave, n] = String(id).split('|');
+    if (tipo === 'pdiit') {
+  const luogo = n;
+
+  if (!regioni[chiave]?.pdi[luogo]) {
+    return errore('Punto di interesse non trovato: rilancia il comando.');
+  }
+
+  return itinerario.run({ da: 'Arcamis', a: luogo }, ctx);
+}
+
+if (tipo === 'pdit') {
+  const luogo = chiave;
+  const regione = chiaviRegioni.find((r) => regioni[r].pdi[luogo]);
+
+  return regione
+    ? dettaglio(regione, luogo)
+    : errore('Questo luogo non è registrato nei Punti di Interesse.');
+}
     if (tipo === 'pdr') return regioni[valori[0]] ? vistaRegione(valori[0]) : errore('Regione non trovata: rilancia il comando.');
     if (!['pds', 'pdp', 'pdl'].includes(tipo)) return null;
     if (!regioni[chiave]) return errore('Regione non trovata: rilancia il comando.');
