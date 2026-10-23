@@ -120,23 +120,10 @@ export default {
     if (i.type === COMPONENTE || i.type === INVIO_MODULO) {
       const id = String(i.data?.custom_id || '');
 
-      // Pulsante "Menu principale": prova a eliminare il messaggio.
+      // Pulsante "Menu principale" su un messaggio privato: lo elimina.
       if (id === 'menu|home' && (i.message?.flags & 64)) {
-  return json({ type: R_CANCELLA_MESSAGGIO });
-}
-        console.log('Pulsante bmr premuto:', {
-          id,
-          application_id: i.application_id,
-          message_id: i.message?.id,
-          flags: i.message?.flags,
-          token_presente: Boolean(i.token),
-        });
-
         if (!i.message?.id || !i.application_id || !i.token) {
-          console.error(
-            'Eliminazione bmr impossibile: dati del messaggio mancanti'
-          );
-
+          console.error('Eliminazione impossibile: dati del messaggio mancanti');
           return json({ type: R_CANCELLA_MESSAGGIO });
         }
 
@@ -144,27 +131,22 @@ export default {
           `https://discord.com/api/v10/webhooks/${i.application_id}` +
           `/${i.token}/messages/${i.message.id}`;
 
-        // Esegue la richiesta in background per non ritardare la risposta.
+        // In background, dopo che Discord ha ricevuto la conferma del clic.
         ctx.waitUntil(
           (async () => {
             try {
-              const risposta = await fetch(url, {
-                method: 'DELETE',
-              });
-
-              const testo = await risposta.text();
-
-              console.log('Risultato eliminazione bmr:', {
-                status: risposta.status,
-                risposta: testo,
-              });
+              await new Promise((r) => setTimeout(r, 700));
+              const risposta = await fetch(url, { method: 'DELETE' });
+              if (!risposta.ok) {
+                console.error('Eliminazione fallita:', risposta.status, await risposta.text());
+              }
             } catch (err) {
-              console.error('Errore eliminazione bmr:', err);
+              console.error('Errore eliminazione:', err);
             }
           })()
         );
 
-        // Conferma il clic del componente.
+        // Conferma il clic senza modificare il messaggio.
         return json({ type: R_CANCELLA_MESSAGGIO });
       }
 
@@ -256,7 +238,7 @@ export default {
           allowed_mentions: { parse: [] },
         },
       });
-    } // Chiude il blocco COMPONENTE / INVIO_MODULO
+    }
 
     if (i.type === COMANDO) {
       let dati;
