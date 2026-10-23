@@ -8,4 +8,4 @@ workers_dev = true
 [vars]
 DISCORD_PUBLIC_KEY = "c33c5287c976fda8ed9f2b530f5a1ac01f0cc5bf4ed2f82ec7e046ee7418e732"
 # ID del canale dove /forfun pubblica le sessioni (tasto destro sul canale > Copia ID canale).
-FORFUN_CANALE = "1562767644011003944"
+FORFUN_CANALE = "1563194788218675230"
