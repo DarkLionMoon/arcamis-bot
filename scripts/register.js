@@ -10,7 +10,7 @@ const defs = definizioni();
 
 if (process.argv.includes('--dry')) {
   console.log(JSON.stringify(defs, null, 2));
-  console.log(`\n${defs.length} comandi validi (dry run, nulla inviato).`);
+  console.log('\n' + defs.length + ' comandi validi (dry run, nulla inviato).');
   process.exit(0);
 }
 
@@ -56,9 +56,9 @@ for (const guildId of guildIds) {
   const registrati = await res.json();
 
   console.log(
-    `Registrati ${registrati.length} comandi ${
-      guildId ? `sul server ${guildId}` : '(globali)'
-    }: ${registrati.map((c) => '/' + c.name).join(', ')}`
-  );
+  'Registrati ' + registrati.length + ' comandi ' +
+  (guildId ? 'sul server ' + guildId : '(globali)') +
+  ': ' + registrati.map((c) => '/' + c.name).join(', ')
+);
 }
 ```
