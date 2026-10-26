@@ -9,3 +9,8 @@ workers_dev = true
 DISCORD_PUBLIC_KEY = "c33c5287c976fda8ed9f2b530f5a1ac01f0cc5bf4ed2f82ec7e046ee7418e732"
 # ID del canale dove /forfun pubblica le sessioni (tasto destro sul canale > Copia ID canale).
 FORFUN_CANALE = "1563194788218675230"
+[[d1_databases]]
+binding = "DB"
+database_name = "arcamis-finanze"
+database_id = "INSERISCI_IL_DATABASE_ID"
+migrations_dir = "migrations"
