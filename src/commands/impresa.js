@@ -210,12 +210,13 @@ async function impresaUtente(DB, i) {
   return { impresa: corrispondenze[0] };
 }
 
+
 function risposta(titolo, descrizione, campi) {
   return {
     embeds: [embed({ titolo, descrizione, campi, colore: '#c9a227' })],
-    flags: 64,
   };
 }
+
 
 export default {
   descrizione: 'Gestione delle imprese e delle loro finanze',
