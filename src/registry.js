@@ -73,10 +73,19 @@ export function definizioni() {
 // Trasforma le opzioni di Discord in un oggetto semplice { nome: valore }.
 export function leggiOpzioni(opzioni = []) {
   const out = {};
-  for (const o of opzioni) out[o.name] = o.value;
+
+  for (const o of opzioni) {
+    if (o.type === 1 || o.type === 2) {
+      out.subcommand = o.name;
+
+      Object.assign(out, leggiOpzioni(o.options || []));
+    } else if (o.type === 3 || o.type === 4 || o.type === 5 || o.type === 6 || o.type === 7 || o.type === 8 || o.type === 9 || o.type === 10 || o.type === 11) {
+      out[o.name] = o.value;
+    }
+  }
+
   return out;
 }
-
 // Esegue un comando e restituisce i dati della risposta (embeds, flags).
 export function esegui(nome, opzioni, ctx = {}) {
   const n = norm(nome);
