@@ -335,6 +335,40 @@ if (azione === 'saldo') {
   }
 
   
+
+const saldo = Number(r?.saldo_cp ?? 0);
+const segno = saldo < 0 ? '-' : '';
+
+// Partiamo dai movimenti registrati per ciascun taglio.
+const monete = {
+  PP: Number(r?.pp ?? 0),
+  GP: Number(r?.gp ?? 0),
+  EP: Number(r?.ep ?? 0),
+  SP: Number(r?.sp ?? 0),
+  CP: Number(r?.cp ?? 0),
+};
+
+// Cambio automatico: se un taglio è negativo,
+// prendiamo monete dal taglio immediatamente superiore.
+const cambi = [
+  ['CP', 'SP', 10],
+  ['SP', 'EP', 5],
+  ['EP', 'GP', 2],
+  ['GP', 'PP', 10],
+];
+
+for (const [piccola, grande, rapporto] of cambi) {
+  if (monete[piccola] < 0 && monete[grande] > 0) {
+    const daCambiare = Math.min(
+      Math.ceil(-monete[piccola] / rapporto),
+      monete[grande]
+    );
+
+    monete[grande] -= daCambiare;
+    monete[piccola] += daCambiare * rapporto;
+  }
+}
+
 const dettaglio = [
   `💎 ${monete.PP} PP`,
   `🟡 ${monete.GP} GP`,
@@ -352,7 +386,7 @@ return risposta(
   `Saldo — ${impresa.nome}`,
   `${dettaglio}\n\n**Valore totale**\n🟡 ${totaleMO} MO`
 );
-}
+
 
 
 
