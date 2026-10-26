@@ -9,6 +9,7 @@ const MONETE = {
 };
 
 const NOME_MAX = 80;
+const CAPO_STAFF_ROLE_ID = '1493170263448354867';
 
 function opzioniFinanze() {
   return [
@@ -56,18 +57,45 @@ function opzioniFinanze() {
           required: true,
           max_length: 200,
         },
+                {
+          type: 3,
+          name: 'impresa',
+          description: 'Nome impresa da gestire (capo-staff)',
+          required: false,
+          max_length: NOME_MAX,
+        },
       ],
     },
+    
     {
       type: 1,
       name: 'saldo',
       description: 'Mostra il saldo dell’impresa',
+      options: [
+        {
+          type: 3,
+          name: 'impresa',
+          description: 'Nome impresa da consultare (capo-staff)',
+          required: false,
+          max_length: NOME_MAX,
+        },
+      ],
     },
     {
       type: 1,
       name: 'storico',
       description: 'Mostra gli ultimi movimenti dell’impresa',
+      options: [
+        {
+          type: 3,
+          name: 'impresa',
+          description: 'Nome impresa da consultare (capo-staff)',
+          required: false,
+          max_length: NOME_MAX,
+        },
+      ],
     },
+
   ];
 }
 
@@ -202,7 +230,7 @@ export default {
       );
     }
 
-    const selezione = await impresaUtente(DB, i);
+    const selezione = await selezionaImpresa(DB, i, opzioni);
     if (!selezione.impresa) return errore(selezione.errore);
 
     const impresa = selezione.impresa;
