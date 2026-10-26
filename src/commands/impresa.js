@@ -338,9 +338,6 @@ return risposta(
   `**Saldo complessivo:** ${segno}${dettaglio}`
 );
 
-        `Saldo — ${impresa.nome}`,
-        `Saldo complessivo: **${saldo.toLocaleString('it-IT')} CP**\nEquivalente in GP: **${(saldo / 100).toLocaleString('it-IT', { maximumFractionDigits: 2 })} GP**`
-      );
     }
 
     if (azione === 'storico') {
