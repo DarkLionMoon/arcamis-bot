@@ -318,8 +318,26 @@ export default {
          WHERE gilda_id = ?`
       ).bind(impresa.id).first();
 
-      const saldo = Number(r?.saldo_cp ?? 0);
-      return risposta(
+     
+const saldo = Number(r?.saldo_cp ?? 0);
+const segno = saldo < 0 ? '-' : '';
+let resto = Math.abs(saldo);
+
+const monete = {};
+for (const [nome, valore] of Object.entries(MONETE)) {
+  monete[nome] = Math.floor(resto / valore);
+  resto %= valore;
+}
+
+const dettaglio = Object.entries(monete)
+  .map(([nome, quantita]) => `**${quantita} ${nome}**`)
+  .join(' · ');
+
+return risposta(
+  `Saldo — ${impresa.nome}`,
+  `**Saldo complessivo:** ${segno}${dettaglio}`
+);
+
         `Saldo — ${impresa.nome}`,
         `Saldo complessivo: **${saldo.toLocaleString('it-IT')} CP**\nEquivalente in GP: **${(saldo / 100).toLocaleString('it-IT', { maximumFractionDigits: 2 })} GP**`
       );
