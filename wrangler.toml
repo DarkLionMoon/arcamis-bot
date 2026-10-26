@@ -12,5 +12,5 @@ FORFUN_CANALE = "1563194788218675230"
 [[d1_databases]]
 binding = "DB"
 database_name = "arcamis-finanze"
-database_id = "INSERISCI_IL_DATABASE_ID"
+database_id = "6d8fef3c-e557-415f-9669-1c54c57ccdf2"
 migrations_dir = "migrations"
