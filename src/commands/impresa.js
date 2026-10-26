@@ -1,4 +1,3 @@
-```javascript
 import { embed, errore, norm } from '../util.js';
 
 const MONETE = {
@@ -30,7 +29,8 @@ function opzioniFinanze() {
           name: 'ruolo',
           description: 'Ruolo Discord autorizzato per questa impresa',
           required: true,
-      }],
+        },
+      ],
     },
     {
       type: 1,
@@ -175,17 +175,6 @@ export default {
         return errore(`Il nome deve contenere da 1 a ${NOME_MAX} caratteri.`);
       }
 
-      if (!ruoloId || !(i.data?.options ?? []).some((o) => o.name === 'ruolo' && o.value === ruoloId)) {
-        return errore('Ruolo Discord non valido.');
-      }
-
-      const ruoliDelServer = i.member?.roles ?? [];
-      const ruoloScelto = i.data?.resolved?.roles?.[ruoloId];
-
-      if (!ruoloScelto) {
-        return errore('Non riesco a verificare il ruolo scelto. Riprova selezionandolo dal menu Discord.');
-      }
-
       try {
         await DB.prepare(
           `INSERT INTO finanze_gilde
@@ -291,4 +280,4 @@ export default {
     return errore('Sottocomando non riconosciuto.');
   },
 };
-```
+
