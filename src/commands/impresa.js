@@ -334,15 +334,26 @@ if (azione === 'saldo') {
     resto %= valore;
   }
 
-  const dettaglio = Object.entries(monete)
-    .map(([nome, quantita]) => `**${quantita} ${nome}**`)
-    .join(' · ');
+  
+const dettaglio = [
+  `💎 ${monete.PP} PP`,
+  `🟡 ${monete.GP} GP`,
+  `⚪ ${monete.EP} EP`,
+  `🔺 ${monete.SP} SP`,
+  `🟤 ${monete.CP} CP`,
+].join('\n');
 
-  return risposta(
-    `Saldo — ${impresa.nome}`,
-    `**Saldo complessivo:** ${segno}${dettaglio}\n\n**Movimenti registrati:** ${r.pp} PP · ${r.gp} GP · ${r.ep} EP · ${r.sp} SP · ${r.cp} CP`
-  );
+const totaleMO = (saldo / MONETE.GP).toLocaleString('it-IT', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+return risposta(
+  `Saldo — ${impresa.nome}`,
+  `${dettaglio}\n\n**Valore totale**\n🟡 ${totaleMO} MO`
+);
 }
+
 
 
     if (azione === 'storico') {
