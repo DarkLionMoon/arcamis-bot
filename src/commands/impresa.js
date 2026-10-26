@@ -1,4 +1,4 @@
-import { embed, errore, norm } from '../util.js';
+import { embed, errore } from '../util.js';
 
 const MONETE = {
   PP: 1000,
