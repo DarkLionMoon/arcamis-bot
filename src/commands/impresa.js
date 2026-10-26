@@ -141,6 +141,46 @@ async function impreseDelServer(DB, guildId) {
   return result.results ?? [];
 }
 
+function eCapoStaff(i) {
+  return (i.member?.roles ?? []).includes(CAPO_STAFF_ROLE_ID);
+}
+
+async function selezionaImpresa(DB, i, opzioni) {
+  const nomeRichiesto = String(opzioni.impresa ?? '').trim();
+
+  if (eCapoStaff(i)) {
+    if (!nomeRichiesto) {
+      return {
+        errore: 'Indica il nome dell’impresa nel campo impresa.',
+      };
+    }
+
+    const impresa = await DB.prepare(
+      `SELECT id, nome, ruolo_id
+       FROM finanze_gilde
+       WHERE discord_guild_id = ?
+         AND nome = ? COLLATE NOCASE
+       LIMIT 1`
+    ).bind(i.guild_id, nomeRichiesto).first();
+
+    if (!impresa) {
+      return {
+        errore: 'Impresa non trovata. Usa /impresa elenco per vedere i nomi disponibili.',
+      };
+    }
+
+    return { impresa };
+  }
+
+  if (nomeRichiesto) {
+    return {
+      errore: 'Il campo impresa è riservato a capo-staff. Omettilo per usare la tua impresa.',
+    };
+  }
+
+  return impresaUtente(DB, i);
+}
+
 async function impresaUtente(DB, i) {
   const guildId = i.guild_id;
   const ruoliUtente = i.member?.roles ?? [];
