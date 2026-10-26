@@ -115,4 +115,180 @@ async function impreseDelServer(DB, guildId) {
 
 async function impresaUtente(DB, i) {
   const guildId = i.guild_id;
-  const
+  const ruoliUtente = i.member?.roles ?? [];
+
+  if (!guildId) {
+    return { errore: 'Questo comando può essere usato solo in un server Discord.' };
+  }
+
+  const imprese = await impreseDelServer(DB, guildId);
+
+  if (imprese.length === 0) {
+    return { errore: 'Non ci sono imprese configurate. Un amministratore può usare `/impresa crea`.' };
+  }
+
+  const corrispondenze = imprese.filter((x) => ruoliUtente.includes(x.ruolo_id));
+
+  if (corrispondenze.length === 0) {
+    return { errore: 'Non hai il ruolo Discord associato a nessuna impresa.' };
+  }
+
+  if (corrispondenze.length > 1) {
+    return {
+      errore: `Hai ruoli associati a più imprese (${corrispondenze.map((x) => x.nome).join(', ')}). Per evitare errori, devi avere un solo ruolo d’impresa per usare questa funzione.`,
+    };
+  }
+
+  return { impresa: corrispondenze[0] };
+}
+
+function risposta(titolo, descrizione, campi) {
+  return {
+    embeds: [embed({ titolo, descrizione, campi, colore: '#c9a227' })],
+    flags: 64,
+  };
+}
+
+export default {
+  descrizione: 'Gestione delle imprese e delle loro finanze',
+  opzioni: opzioniFinanze(),
+
+  async run(opzioni = {}, ctx = {}) {
+    const i = ctx.i;
+    const DB = ctx.env?.DB;
+
+    if (!i) return errore('Contesto Discord non disponibile.');
+    if (!DB) return errore('Database D1 non configurato: controlla il binding DB in wrangler.toml.');
+
+    const azione = opzioni.subcommand;
+    const guildId = i.guild_id;
+
+    if (!guildId) return errore('Usa questo comando dentro un server Discord.');
+
+    if (azione === 'crea') {
+      if (!amministratore(i)) return errore('Solo gli amministratori del server possono creare imprese.');
+
+      const nome = String(opzioni.nome ?? '').trim();
+      const ruoloId = String(opzioni.ruolo ?? '');
+
+      if (!nome || nome.length > NOME_MAX) {
+        return errore(`Il nome deve contenere da 1 a ${NOME_MAX} caratteri.`);
+      }
+
+      if (!ruoloId || !(i.data?.options ?? []).some((o) => o.name === 'ruolo' && o.value === ruoloId)) {
+        return errore('Ruolo Discord non valido.');
+      }
+
+      const ruoliDelServer = i.member?.roles ?? [];
+      const ruoloScelto = i.data?.resolved?.roles?.[ruoloId];
+
+      if (!ruoloScelto) {
+        return errore('Non riesco a verificare il ruolo scelto. Riprova selezionandolo dal menu Discord.');
+      }
+
+      try {
+        await DB.prepare(
+          `INSERT INTO finanze_gilde
+            (discord_guild_id, nome, ruolo_id, creato_da)
+           VALUES (?, ?, ?, ?)`
+        ).bind(guildId, nome, ruoloId, i.member?.user?.id ?? i.user?.id ?? '').run();
+
+        return risposta('Impresa creata', `L’impresa **${nome}** è stata creata e collegata al ruolo <@&${ruoloId}>.`);
+      } catch (err) {
+        if (String(err?.message ?? '').includes('UNIQUE')) {
+          return errore('Esiste già un’impresa con questo nome in questo server.');
+        }
+        console.error('Errore creazione impresa:', err);
+        return errore('Non è stato possibile creare l’impresa. Controlla i log del Worker.');
+      }
+    }
+
+    if (azione === 'elenco') {
+      const imprese = await impreseDelServer(DB, guildId);
+      if (!imprese.length) return risposta('Imprese', 'Non è stata ancora creata nessuna impresa.');
+
+      return risposta(
+        'Imprese del server',
+        imprese.map((x) => `• **${x.nome}** — <@&${x.ruolo_id}>`).join('\n')
+      );
+    }
+
+    const selezione = await impresaUtente(DB, i);
+    if (!selezione.impresa) return errore(selezione.errore);
+
+    const impresa = selezione.impresa;
+
+    if (azione === 'finanze') {
+      const movimento = analizzaMovimento(opzioni.movimento);
+      const motivo = String(opzioni.motivo ?? '').trim();
+
+      if (!movimento) return errore('Formato non valido. Usa, per esempio, `+100 GP` per un’entrata oppure `-25 PP` per un’uscita. Monete ammesse: PP, GP, EP, SP, CP.');
+      if (!motivo) return errore('Inserisci il motivo del movimento.');
+
+      try {
+        await DB.prepare(
+          `INSERT INTO finanze_movimenti
+            (gilda_id, tipo, moneta, quantita, valore_cp, motivo, autore_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          impresa.id,
+          movimento.tipo,
+          movimento.moneta,
+          movimento.quantita,
+          movimento.valore_cp,
+          motivo,
+          i.member?.user?.id ?? i.user?.id ?? ''
+        ).run();
+
+        const segno = movimento.tipo === 'entrata' ? '+' : '−';
+
+        return risposta(
+          'Movimento registrato',
+          `**Impresa:** ${impresa.nome}\n**Operazione:** ${segno}${movimento.quantita} ${movimento.moneta}\n**Motivo:** ${motivo}`
+        );
+      } catch (err) {
+        console.error('Errore registrazione movimento:', err);
+        return errore('Non è stato possibile registrare il movimento nel database.');
+      }
+    }
+
+    if (azione === 'saldo') {
+      const r = await DB.prepare(
+        `SELECT
+           COALESCE(SUM(CASE WHEN tipo = 'entrata' THEN valore_cp ELSE -valore_cp END), 0) AS saldo_cp
+         FROM finanze_movimenti
+         WHERE gilda_id = ?`
+      ).bind(impresa.id).first();
+
+      const saldo = Number(r?.saldo_cp ?? 0);
+      return risposta(
+        `Saldo — ${impresa.nome}`,
+        `Saldo complessivo: **${saldo.toLocaleString('it-IT')} CP**\nEquivalente in GP: **${(saldo / 100).toLocaleString('it-IT', { maximumFractionDigits: 2 })} GP**`
+      );
+    }
+
+    if (azione === 'storico') {
+      const r = await DB.prepare(
+        `SELECT tipo, moneta, quantita, motivo, autore_id, creato_il
+         FROM finanze_movimenti
+         WHERE gilda_id = ?
+         ORDER BY id DESC
+         LIMIT 10`
+      ).bind(impresa.id).all();
+
+      const movimenti = r.results ?? [];
+      if (!movimenti.length) return risposta(`Storico — ${impresa.nome}`, 'Non ci sono ancora movimenti.');
+
+      return risposta(
+        `Storico — ${impresa.nome}`,
+        movimenti.map((m) => {
+          const segno = m.tipo === 'entrata' ? '+' : '−';
+          return `**${segno}${m.quantita} ${m.moneta}** — ${m.motivo}\n<@${m.autore_id}> · ${m.creato_il}`;
+        }).join('\n\n')
+      );
+    }
+
+    return errore('Sottocomando non riconosciuto.');
+  },
+};
+```
