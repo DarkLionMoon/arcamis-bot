@@ -310,35 +310,40 @@ export default {
       }
     }
 
-    if (azione === 'saldo') {
-      const r = await DB.prepare(
-        `SELECT
-           COALESCE(SUM(CASE WHEN tipo = 'entrata' THEN valore_cp ELSE -valore_cp END), 0) AS saldo_cp
-         FROM finanze_movimenti
-         WHERE gilda_id = ?`
-      ).bind(impresa.id).first();
+    
+if (azione === 'saldo') {
+  const r = await DB.prepare(
+    `SELECT
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' THEN valore_cp ELSE -valore_cp END), 0) AS saldo_cp,
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' AND moneta = 'PP' THEN quantita WHEN tipo = 'uscita' AND moneta = 'PP' THEN -quantita ELSE 0 END), 0) AS pp,
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' AND moneta = 'GP' THEN quantita WHEN tipo = 'uscita' AND moneta = 'GP' THEN -quantita ELSE 0 END), 0) AS gp,
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' AND moneta = 'EP' THEN quantita WHEN tipo = 'uscita' AND moneta = 'EP' THEN -quantita ELSE 0 END), 0) AS ep,
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' AND moneta = 'SP' THEN quantita WHEN tipo = 'uscita' AND moneta = 'SP' THEN -quantita ELSE 0 END), 0) AS sp,
+       COALESCE(SUM(CASE WHEN tipo = 'entrata' AND moneta = 'CP' THEN quantita WHEN tipo = 'uscita' AND moneta = 'CP' THEN -quantita ELSE 0 END), 0) AS cp
+     FROM finanze_movimenti
+     WHERE gilda_id = ?`
+  ).bind(impresa.id).first();
 
-     
-const saldo = Number(r?.saldo_cp ?? 0);
-const segno = saldo < 0 ? '-' : '';
-let resto = Math.abs(saldo);
+  const saldo = Number(r?.saldo_cp ?? 0);
+  const segno = saldo < 0 ? '-' : '';
+  let resto = Math.abs(saldo);
 
-const monete = {};
-for (const [nome, valore] of Object.entries(MONETE)) {
-  monete[nome] = Math.floor(resto / valore);
-  resto %= valore;
+  const monete = {};
+  for (const [nome, valore] of Object.entries(MONETE)) {
+    monete[nome] = Math.floor(resto / valore);
+    resto %= valore;
+  }
+
+  const dettaglio = Object.entries(monete)
+    .map(([nome, quantita]) => `**${quantita} ${nome}**`)
+    .join(' · ');
+
+  return risposta(
+    `Saldo — ${impresa.nome}`,
+    `**Saldo complessivo:** ${segno}${dettaglio}\n\n**Movimenti registrati:** ${r.pp} PP · ${r.gp} GP · ${r.ep} EP · ${r.sp} SP · ${r.cp} CP`
+  );
 }
 
-const dettaglio = Object.entries(monete)
-  .map(([nome, quantita]) => `**${quantita} ${nome}**`)
-  .join(' · ');
-
-return risposta(
-  `Saldo — ${impresa.nome}`,
-  `**Saldo complessivo:** ${segno}${dettaglio}`
-);
-
-    }
 
     if (azione === 'storico') {
       const r = await DB.prepare(
