@@ -7,10 +7,11 @@ import necrologio from './commands/necrologio.js';
 import pdi from './commands/pdi.js';
 import menu from './commands/menu.js';
 import mercante from './commands/mercante.js';
+import impresa from './commands/impresa.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { menu, itinerario, pdi, bollettino, oggi, necrologio, forfun, mercante };
+const gestori = { menu, itinerario, pdi, bollettino, oggi, necrologio, forfun, mercante, impresa };
 
 export { promemoria } from './commands/forfun.js';
 
