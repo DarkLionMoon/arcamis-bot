@@ -30,4 +30,4 @@ CREATE TABLE IF NOT EXISTS finanze_movimenti (
 CREATE INDEX IF NOT EXISTS idx_finanze_movimenti_gilda
 ON finanze_movimenti(gilda_id, id);
 
-Aggiunge il sistema finanziario delle imprese. Aggiunge la struttura del database D1 e i comandi per gestire entrate, uscite e saldi nelle monete D&D. 
+
