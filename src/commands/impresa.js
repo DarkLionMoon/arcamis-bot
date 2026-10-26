@@ -324,16 +324,6 @@ if (azione === 'saldo') {
      WHERE gilda_id = ?`
   ).bind(impresa.id).first();
 
-  const saldo = Number(r?.saldo_cp ?? 0);
-  const segno = saldo < 0 ? '-' : '';
-  let resto = Math.abs(saldo);
-
-  const monete = {};
-  for (const [nome, valore] of Object.entries(MONETE)) {
-    monete[nome] = Math.floor(resto / valore);
-    resto %= valore;
-  }
-
   
 
 const saldo = Number(r?.saldo_cp ?? 0);
