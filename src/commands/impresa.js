@@ -300,7 +300,7 @@ export default {
 
         const segno = movimento.tipo === 'entrata' ? '+' : '−';
 
-        return risposta(
+        
           'Movimento registrato',
           `**Impresa:** ${impresa.nome}\n**Operazione:** ${segno}${movimento.quantita} ${movimento.moneta}\n**Motivo:** ${motivo}`
         );
@@ -376,7 +376,7 @@ return risposta(
   `Saldo — ${impresa.nome}`,
   `${dettaglio}\n\n**Valore totale**\n🟡 ${totaleMO} MO`
 );
-
+}
 
 
 
