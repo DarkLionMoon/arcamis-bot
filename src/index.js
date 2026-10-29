@@ -192,7 +192,8 @@ export default {
         id.startsWith('bmr|') ||
         id.startsWith('itd|') ||
         id.startsWith('ita|') ||
-        id.startsWith('itp|');
+        id.startsWith('itp|') ||
+        id.startsWith('avrae|');
 
       const { flags: _flags, ...risposta } = dati;
 
