@@ -2,7 +2,7 @@ import { embed, errore } from '../util.js';
 
 const CANALE = '1521930654575755424';
 const API = 'https://discord.com/api/v10';
-const INTRO = 'Vuoi una lista di ogni singolo comando necessario di Avrae? Clicca il pulsante corrispondente alla categoria che cerchi! (In alternativa, con il comando `!aiuto`, avrete a disposizione delle liste carine intra-Avrae degli stessi comandi).`n`nCi teniamo a ringraziare **<@334071748850876416>** per averci fornito una lista dei comandi non-homebrew di Avrae!';
+const INTRO = 'Vuoi una lista di ogni singolo comando necessario di Avrae? Clicca il pulsante corrispondente alla categoria che cerchi! (In alternativa, con il comando `!aiuto`, avrete a disposizione delle liste carine intra-Avrae degli stessi comandi).\n\nCi teniamo a ringraziare **<@334071748850876416>** per averci fornito una lista dei comandi non-homebrew di Avrae!';
 
 const CATEGORIE = {
   homebrew: {
