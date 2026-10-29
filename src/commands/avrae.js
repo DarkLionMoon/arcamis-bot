@@ -152,6 +152,13 @@ export default {
   descrizione: 'Pubblica il pannello con le liste dei comandi Avrae',
   opzioni: [],
   async run(_opzioni, ctx = {}) {
+    if (ctx.i) {
+      let permessi = 0n;
+      try { permessi = BigInt(ctx.i.member?.permissions ?? 0); } catch {}
+      if ((permessi & 0x8n) === 0n && (permessi & 0x2000n) === 0n) {
+        return errore('Solo chi ha il permesso Amministratore o Gestire i messaggi può pubblicare il pannello.');
+      }
+    }
     const token = ctx.env?.DISCORD_TOKEN;
     if (!token) return errore('Configurazione mancante: il Worker deve avere il segreto DISCORD_TOKEN.');
     const r = await fetch(API + '/channels/' + CANALE + '/messages', {
