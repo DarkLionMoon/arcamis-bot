@@ -67,6 +67,25 @@ assert.strictEqual(campi(r)['Tempo di viaggio'], '2 giorni e 1.5 ore'); // 105 m
 r = await (await invia(comando('itinerario', [{ name: 'da', type: 3, value: 'Arcamis' }, { name: 'a', type: 3, value: 'Arcamis' }]))).json();
 assert.strictEqual(r.data.embeds[0].title, 'Errore');
 
+// 3b) Test accredito Avrae: accesso negato senza ruolo, istruzioni visibili a Capo-Staff.
+const STAFF_ROLE_ID = '1493170263448354867';
+r = await (await invia({
+  type: 2,
+  guild_id: 'test-guild',
+  data: { name: 'test-avrae-credit', options: [] },
+  member: { roles: [] },
+})).json();
+assert.strictEqual(r.data.embeds[0].title, 'Errore');
+assert.strictEqual(r.data.flags, 64);
+r = await (await invia({
+  type: 2,
+  guild_id: 'test-guild',
+  data: { name: 'test-avrae-credit', options: [] },
+  member: { roles: [STAFF_ROLE_ID] },
+})).json();
+assert.ok(r.data.embeds[0].title.includes('Test integrazione Avrae'));
+assert.strictEqual(r.data.flags, 64);
+
 // 4) Comandi semplici, alias e aiuto
 r = await (await invia(comando('regole'))).json();
 assert.strictEqual(r.data.embeds[0].title, 'Regolamento di Arcamis');

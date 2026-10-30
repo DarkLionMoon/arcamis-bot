@@ -9,10 +9,11 @@ import menu from './commands/menu.js';
 import avrae from './commands/avrae.js';
 import mercante from './commands/mercante.js';
 import impresa from './commands/impresa.js';
+import testAvraeCredit from './commands/test-avrae-credit.js';
 import { embed, errore, norm } from './util.js';
 
 // Comandi con logica: un file in src/commands/, registrato qui.
-const gestori = { avrae, menu, itinerario, pdi, bollettino, oggi, necrologio, forfun, mercante, impresa };
+const gestori = { avrae, menu, itinerario, pdi, bollettino, oggi, necrologio, forfun, mercante, impresa, 'test-avrae-credit': testAvraeCredit };
 
 export { promemoria } from './commands/forfun.js';
 
