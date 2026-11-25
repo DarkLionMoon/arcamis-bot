@@ -36,7 +36,12 @@ export async function aggiornaStatoMinecraft(env) {
 
   const statusResponse = await fetch(
     STATUS_API + encodeURIComponent(address),
-    { headers: { Accept: 'application/json' } }
+    {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'ArcamisBot/1.0 (Minecraft server status monitor)',
+      },
+    }
   );
 
   let online;
