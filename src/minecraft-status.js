@@ -26,11 +26,11 @@ async function discordRequest(path, token, options = {}) {
 export async function aggiornaStatoMinecraft(env) {
   const address = env.MINECRAFT_SERVER_ADDRESS?.trim();
   const channelId = env.MINECRAFT_STATUS_CHANNEL_ID?.trim();
-  const token = env.DISCORD_BOT_TOKEN;
+  const token = env.DISCORD_TOKEN;
 
   if (!address || !channelId || !token) {
     throw new Error(
-      'Configura MINECRAFT_SERVER_ADDRESS, MINECRAFT_STATUS_CHANNEL_ID e il secret DISCORD_BOT_TOKEN'
+      'Configura MINECRAFT_SERVER_ADDRESS, MINECRAFT_STATUS_CHANNEL_ID e il secret DISCORD_TOKEN'
     );
   }
 
