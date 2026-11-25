@@ -5,6 +5,7 @@ import {
   componente,
   promemoria,
 } from './registry.js';
+import { aggiornaStatoMinecraft } from './minecraft-status.js';
 
 // Tipi di interazione Discord.
 const PING = 1;
@@ -31,9 +32,14 @@ export default {
   // Promemoria automatici configurati in wrangler.toml.
   async scheduled(_evento, env, ctx) {
     ctx.waitUntil(
-      promemoria(env).catch((err) => {
-        console.error('Errore nel promemoria:', err);
-      })
+      Promise.all([
+        promemoria(env).catch((err) => {
+          console.error('Errore nel promemoria:', err);
+        }),
+        aggiornaStatoMinecraft(env).catch((err) => {
+          console.error('Errore nello stato Minecraft:', err);
+        }),
+      ])
     );
   },
 
