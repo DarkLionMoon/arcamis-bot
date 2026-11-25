@@ -179,6 +179,16 @@ async function pingMinecraftServer(address, handshakeAddress = address) {
   }
 }
 
+async function pingMinecraftServerWithRetry(address, handshakeAddress) {
+  try {
+    return await pingMinecraftServer(address, handshakeAddress);
+  } catch (firstError) {
+    console.warn('Ping Minecraft fallito; riprovo una volta:', firstError?.message || firstError);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return pingMinecraftServer(address, handshakeAddress);
+  }
+}
+
 async function discordRequest(path, token, options = {}) {
   const response = await fetch(DISCORD_API + path, {
     ...options,
@@ -217,7 +227,7 @@ export async function aggiornaStatoMinecraft(env) {
   console.info('Minecraft server address resolved:', resolved);
 
   const statusChecks = await Promise.allSettled([
-    pingMinecraftServer(resolved.address, address),
+    pingMinecraftServerWithRetry(resolved.address, address),
     fetch(MCSRVSTAT_API + serverAddress, {
       headers: {
         Accept: 'text/plain',
