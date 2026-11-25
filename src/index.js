@@ -37,7 +37,11 @@ export default {
           console.error('Errore nel promemoria:', err);
         }),
         aggiornaStatoMinecraft(env).catch((err) => {
-          console.error('Errore nello stato Minecraft:', err);
+          console.error(
+            'Errore nello stato Minecraft:',
+            err instanceof Error ? err.message : String(err),
+            err instanceof Error ? err.stack : ''
+          );
         }),
       ])
     );
