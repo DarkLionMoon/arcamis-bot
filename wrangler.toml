@@ -9,7 +9,7 @@ workers_dev = true
 DISCORD_PUBLIC_KEY = "c33c5287c976fda8ed9f2b530f5a1ac01f0cc5bf4ed2f82ec7e046ee7418e732"
 # ID del canale dove /forfun pubblica le sessioni (tasto destro sul canale > Copia ID).
 FORFUN_CANALE = "1563194788218675230"
-MINECRAFT_SERVER_ADDRESS = "mndlm.aternos.me"
+MINECRAFT_SERVER_ADDRESS = "grasshopper.aternos.host:17039"
 MINECRAFT_STATUS_CHANNEL_ID = "1575172331666677791"
 
 [[d1_databases]]
