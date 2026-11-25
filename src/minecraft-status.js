@@ -1,4 +1,5 @@
-const STATUS_API = 'https://api.mcsrvstat.us/simple/';
+const MCSRVSTAT_API = 'https://api.mcsrvstat.us/simple/';
+const MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java/';
 const DISCORD_API = 'https://discord.com/api/v10';
 
 async function discordRequest(path, token, options = {}) {
@@ -34,23 +35,53 @@ export async function aggiornaStatoMinecraft(env) {
     );
   }
 
-  const statusResponse = await fetch(
-    STATUS_API + encodeURIComponent(address),
-    {
+  const statusChecks = await Promise.allSettled([
+    fetch(MCSRVSTAT_API + encodeURIComponent(address), {
       headers: {
-        Accept: 'application/json',
+        Accept: 'text/plain',
         'User-Agent': 'ArcamisBot/1.0 (Minecraft server status monitor)',
       },
-    }
-  );
+    }).then((response) => {
+      if (response.status === 200) return { source: 'mcsrvstat.us', online: true };
+      if (response.status === 404) return { source: 'mcsrvstat.us', online: false };
+      throw new Error('HTTP ' + response.status);
+    }),
+    fetch(
+      MCSTATUS_API + encodeURIComponent(address) + '?query=false&timeout=5',
+      {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'ArcamisBot/1.0 (Minecraft server status monitor)',
+        },
+      }
+    ).then(async (response) => {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status + ': ' + (await response.text()));
+      }
+      const data = await response.json();
+      if (typeof data.online !== 'boolean') {
+        throw new Error('La risposta di mcstatus.io non contiene online');
+      }
+      return { source: 'mcstatus.io', online: data.online };
+    }),
+  ]);
 
-  let online;
-  if (statusResponse.status === 200) {
-    online = true;
-  } else if (statusResponse.status === 404) {
-    online = false;
-  } else {
-    throw new Error('Minecraft status API ' + statusResponse.status);
+  const successfulChecks = statusChecks
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => result.value);
+  const failedChecks = statusChecks
+    .filter((result) => result.status === 'rejected')
+    .map((result) => String(result.reason?.message || result.reason));
+
+  console.info('Minecraft status providers:', {
+    successful: successfulChecks,
+    failed: failedChecks,
+  });
+
+  // A single failed or stale source must not mark a reachable server offline.
+  const online = successfulChecks.some((result) => result.online);
+  if (!online && successfulChecks.length < 2) {
+    throw new Error('Risposta stato incompleta: ' + failedChecks.join('; '));
   }
 
   const channelPath = '/channels/' + encodeURIComponent(channelId);
