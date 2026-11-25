@@ -71,3 +71,16 @@ Circa 100.000 richieste al giorno e 10 ms di CPU per richiesta. Per comandi di c
 - *Discord rifiuta l'Interactions Endpoint URL*: controlla che `DISCORD_PUBLIC_KEY` in `wrangler.toml` sia quella dell'applicazione giusta e di aver rifatto il deploy.
 - *I comandi non compaiono*: hai invitato il bot con lo scope `applications.commands`? Con `DISCORD_GUILD_ID` il server è quello giusto?
 - *"L'applicazione non ha risposto"*: guarda i log con `npx wrangler tail`.
+
+
+## Stato server Minecraft
+
+Il Worker controlla ogni 5 minuti il server Java configurato in `wrangler.toml` tramite l'API di stato MCSRVSTAT. Quando rileva una transizione, aggiorna l'argomento del canale configurato e pubblica un avviso; il nome del canale resta invariato. L'API esterna può mantenere i risultati in cache per 5 minuti.
+
+Per inviare gli aggiornamenti tramite il bot Arcamis, configura il token come secret del Worker:
+
+```
+npx wrangler secret put DISCORD_BOT_TOKEN
+```
+
+Al bot servono i permessi **Gestisci canali** e **Invia messaggi** nel canale di stato. L'indirizzo del server e l'ID del canale sono variabili non segrete definite in `wrangler.toml`.

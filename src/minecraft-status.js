@@ -2,10 +2,10 @@ const STATUS_API = 'https://api.mcsrvstat.us/simple/';
 const DISCORD_API = 'https://discord.com/api/v10';
 
 async function discordRequest(path, token, options = {}) {
-  const response = await fetch(`${DISCORD_API}${path}`, {
+  const response = await fetch(DISCORD_API + path, {
     ...options,
     headers: {
-      Authorization: `Bot ${token}`,
+      Authorization: 'Bot ' + token,
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...options.headers,
     },
@@ -13,15 +13,15 @@ async function discordRequest(path, token, options = {}) {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Discord API ${response.status}: ${detail}`);
+    throw new Error('Discord API ' + response.status + ': ' + detail);
   }
 
   return response.status === 204 ? null : response.json();
 }
 
 /**
- * Polls the Java server and reflects its state in the configured Discord channel.
- * The channel name doubles as persisted state, so no database migration is needed.
+ * Polls the Java server and publishes state changes in the configured Discord channel.
+ * The channel topic keeps the last state, so no database migration is needed.
  */
 export async function aggiornaStatoMinecraft(env) {
   const address = env.MINECRAFT_SERVER_ADDRESS?.trim();
@@ -35,7 +35,7 @@ export async function aggiornaStatoMinecraft(env) {
   }
 
   const statusResponse = await fetch(
-    `${STATUS_API}${encodeURIComponent(address)}`,
+    STATUS_API + encodeURIComponent(address),
     { headers: { Accept: 'application/json' } }
   );
 
@@ -45,27 +45,42 @@ export async function aggiornaStatoMinecraft(env) {
   } else if (statusResponse.status === 404) {
     online = false;
   } else {
-    throw new Error(`Minecraft status API ${statusResponse.status}`);
+    throw new Error('Minecraft status API ' + statusResponse.status);
   }
 
-  const channelPath = `/channels/${encodeURIComponent(channelId)}`;
+  const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
-  const targetName = online ? 'minecraft-online' : 'minecraft-offline';
+  const currentTopic = channel.topic || '';
+  const topicLines = currentTopic.split('\n');
+  const previousMarker = topicLines[0].match(/^Minecraft server: (ONLINE|OFFLINE)$/);
+  const previousState = previousMarker ? previousMarker[1] : null;
+  const oldDescription = previousMarker ? topicLines.slice(1).join('\n') : currentTopic;
+  const state = online ? 'ONLINE' : 'OFFLINE';
+  const statusLine = 'Minecraft server: ' + state;
+  const newTopic = [statusLine, oldDescription]
+    .filter(Boolean)
+    .join('\n')
+    .slice(0, 1024);
 
-  // Do not hit Discord's channel-update rate limit when the state is unchanged.
-  if (channel.name === targetName) return;
+  // The channel name is deliberately left untouched; status is shown in its topic.
+  if (newTopic !== currentTopic) {
+    await discordRequest(channelPath, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ topic: newTopic }),
+    });
+  }
 
-  await discordRequest(channelPath, token, {
-    method: 'PATCH',
-    body: JSON.stringify({ name: targetName }),
-  });
+  if (previousState === state) return;
 
   const checkedAt = Math.floor(Date.now() / 1000);
-  const content = online
-    ? `🟢 Il server Minecraft è **ONLINE**.\\nUltimo controllo: <t:${checkedAt}:R>`
-    : `🔴 Il server Minecraft è **OFFLINE**.\\nUltimo controllo: <t:${checkedAt}:R>`;
+  const content = [
+    online
+      ? '🟢 Il server Minecraft è **ONLINE**.'
+      : '🔴 Il server Minecraft è **OFFLINE**.',
+    'Ultimo controllo: <t:' + checkedAt + ':R>',
+  ].join('\n');
 
-  await discordRequest(`/channels/${encodeURIComponent(channelId)}/messages`, token, {
+  await discordRequest('/channels/' + encodeURIComponent(channelId) + '/messages', token, {
     method: 'POST',
     body: JSON.stringify({
       content,
