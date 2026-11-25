@@ -261,10 +261,10 @@ export async function aggiornaStatoMinecraft(env) {
     failed: failedChecks,
   });
 
-  const online = successfulChecks.some((result) => result.online);
-  if (!online && successfulChecks.length < 2) {
-    throw new Error('Risposta stato incompleta: ' + failedChecks.join('; '));
-  }
+  // The Minecraft protocol ping is authoritative. Public status APIs can return
+  // stale positives for Aternos addresses when the actual server is stopped.
+  const tcpCheck = statusChecks[0];
+  const online = tcpCheck.status === 'fulfilled';
 
   const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
