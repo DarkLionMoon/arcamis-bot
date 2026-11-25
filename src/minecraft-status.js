@@ -96,14 +96,29 @@ function framePacket(payload) {
   return joinBytes([encodeVarInt(payload.length), payload]);
 }
 
-async function pingMinecraftServer(address) {
+async function readWithTimeout(reader, timeoutMs = 5000) {
+  let timeoutId;
+  try {
+    return await Promise.race([
+      reader.read(),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Timeout ping Minecraft')), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function pingMinecraftServer(address, handshakeAddress = address) {
   const match = address.match(/^(.+):(\d+)$/);
   if (!match) throw new Error('Indirizzo Minecraft senza porta: ' + address);
 
   const hostname = match[1];
   const port = Number(match[2]);
   const encoder = new TextEncoder();
-  const hostBytes = encoder.encode(hostname);
+  const handshakeHostname = handshakeAddress.replace(/:\\d+$/, '');
+  const hostBytes = encoder.encode(handshakeHostname);
   const hostLength = encodeVarInt(hostBytes.length);
   const portBytes = new Uint8Array([port >>> 8, port & 0xff]);
   const handshake = framePacket(joinBytes([
@@ -129,12 +144,7 @@ async function pingMinecraftServer(address) {
 
     let received = new Uint8Array();
     while (received.length < 131072) {
-      const chunkResult = await Promise.race([
-        reader.read(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout ping Minecraft')), 5000)
-        ),
-      ]);
+      const chunkResult = await readWithTimeout(reader);
       if (chunkResult.done) throw new Error('Il server ha chiuso la connessione durante il ping');
       received = joinBytes([received, chunkResult.value]);
 
@@ -207,7 +217,7 @@ export async function aggiornaStatoMinecraft(env) {
   console.info('Minecraft server address resolved:', resolved);
 
   const statusChecks = await Promise.allSettled([
-    pingMinecraftServer(resolved.address),
+    pingMinecraftServer(resolved.address, address),
     fetch(MCSRVSTAT_API + serverAddress, {
       headers: {
         Accept: 'text/plain',
