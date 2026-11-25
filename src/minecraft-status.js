@@ -1,3 +1,5 @@
+import { connect } from 'cloudflare:sockets';
+
 const MCSRVSTAT_API = 'https://api.mcsrvstat.us/simple/';
 const MCSTATUS_API = 'https://api.mcstatus.io/v2/status/java/';
 const DNS_API = 'https://cloudflare-dns.com/dns-query';
@@ -54,6 +56,129 @@ async function resolveServerAddress(address) {
   };
 }
 
+
+function encodeVarInt(value) {
+  const bytes = [];
+  let remaining = value >>> 0;
+  while ((remaining & 0xffffff80) !== 0) {
+    bytes.push((remaining & 0x7f) | 0x80);
+    remaining >>>= 7;
+  }
+  bytes.push(remaining & 0x7f);
+  return Uint8Array.from(bytes);
+}
+
+function readVarInt(bytes, offset) {
+  let value = 0;
+  let length = 0;
+  while (length < 5) {
+    if (offset + length >= bytes.length) return null;
+    const byte = bytes[offset + length];
+    value |= (byte & 0x7f) << (7 * length);
+    length += 1;
+    if ((byte & 0x80) === 0) return { value: value >>> 0, length };
+  }
+  throw new Error('VarInt Minecraft non valido');
+}
+
+function joinBytes(parts) {
+  const length = parts.reduce((total, part) => total + part.length, 0);
+  const result = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+
+function framePacket(payload) {
+  return joinBytes([encodeVarInt(payload.length), payload]);
+}
+
+async function readWithTimeout(reader, timeoutMs = 5000) {
+  let timeoutId;
+  try {
+    return await Promise.race([
+      reader.read(),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Timeout ping Minecraft')), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function pingMinecraftServer(address, handshakeAddress = address) {
+  const match = address.match(/^(.+):(\d+)$/);
+  if (!match) throw new Error('Indirizzo Minecraft senza porta: ' + address);
+
+  const hostname = match[1];
+  const port = Number(match[2]);
+  const encoder = new TextEncoder();
+  const handshakeHostname = handshakeAddress.includes(':') ? handshakeAddress.slice(0, handshakeAddress.lastIndexOf(':')) : handshakeAddress;
+  const hostBytes = encoder.encode(handshakeHostname);
+  const hostLength = encodeVarInt(hostBytes.length);
+  const portBytes = new Uint8Array([port >>> 8, port & 0xff]);
+  const handshake = framePacket(joinBytes([
+    encodeVarInt(0),
+    encodeVarInt(767),
+    hostLength,
+    hostBytes,
+    portBytes,
+    encodeVarInt(1),
+  ]));
+  const statusRequest = Uint8Array.from([1, 0]);
+
+  const socket = connect({ hostname, port }, { allowHalfOpen: true });
+  let reader;
+  let writer;
+  try {
+    await socket.opened;
+    reader = socket.readable.getReader();
+    writer = socket.writable.getWriter();
+    await writer.write(joinBytes([handshake, statusRequest]));
+    writer.releaseLock();
+    writer = null;
+
+    let received = new Uint8Array();
+    while (received.length < 131072) {
+      const chunkResult = await readWithTimeout(reader);
+      if (chunkResult.done) throw new Error('Il server ha chiuso la connessione durante il ping');
+      received = joinBytes([received, chunkResult.value]);
+
+      const packetLength = readVarInt(received, 0);
+      if (!packetLength) continue;
+      const packetStart = packetLength.length;
+      if (received.length < packetStart + packetLength.value) continue;
+
+      const packetId = readVarInt(received, packetStart);
+      if (!packetId || packetId.value !== 0) {
+        throw new Error('Risposta status Minecraft non valida');
+      }
+      const stringLength = readVarInt(received, packetStart + packetId.length);
+      if (!stringLength) throw new Error('Risposta status Minecraft incompleta');
+      const jsonStart = packetStart + packetId.length + stringLength.length;
+      const jsonEnd = jsonStart + stringLength.value;
+      if (received.length < jsonEnd) continue;
+
+      const status = JSON.parse(new TextDecoder().decode(received.slice(jsonStart, jsonEnd)));
+      return {
+        source: 'minecraft-tcp',
+        online: true,
+        version: status.version?.name || null,
+        players: status.players?.online ?? null,
+      };
+    }
+    throw new Error('Risposta status Minecraft troppo grande');
+  } finally {
+    try { reader?.releaseLock(); } catch {}
+    try { writer?.releaseLock(); } catch {}
+    try { await socket.close(); } catch {}
+  }
+}
+
 async function discordRequest(path, token, options = {}) {
   const response = await fetch(DISCORD_API + path, {
     ...options,
@@ -92,6 +217,7 @@ export async function aggiornaStatoMinecraft(env) {
   console.info('Minecraft server address resolved:', resolved);
 
   const statusChecks = await Promise.allSettled([
+    pingMinecraftServer(resolved.address, address),
     fetch(MCSRVSTAT_API + serverAddress, {
       headers: {
         Accept: 'text/plain',
