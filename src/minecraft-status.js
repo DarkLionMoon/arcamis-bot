@@ -4,17 +4,17 @@ const DNS_API = 'https://cloudflare-dns.com/dns-query';
 const DISCORD_API = 'https://discord.com/api/v10';
 
 function encodeServerAddress(address) {
-  const match = address.match(/^(.+):(\\d+)$/);
+  const match = address.match(/^(.+):(\d+)$/);
   return match
     ? encodeURIComponent(match[1]) + ':' + match[2]
     : encodeURIComponent(address);
 }
 
 async function resolveServerAddress(address) {
-  const explicit = address.match(/^(.+):(\\d+)$/);
+  const explicit = address.match(/^(.+):(\d+)$/);
   if (explicit) return { address, source: 'configured-port' };
 
-  const srvName = '_minecraft._tcp.' + address.replace(/\\.$/, '');
+  const srvName = '_minecraft._tcp.' + address.replace(/\.$/, '');
   const url = DNS_API + '?name=' + encodeURIComponent(srvName) + '&type=SRV';
   const response = await fetch(url, {
     headers: {
@@ -28,13 +28,13 @@ async function resolveServerAddress(address) {
   const records = (data.Answer || [])
     .filter((answer) => answer.type === 33)
     .map((answer) => {
-      const match = String(answer.data || '').match(/^(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(.+?)\\.?$/);
+      const match = String(answer.data || '').match(/^(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\.?$/);
       return match
         ? {
             priority: Number(match[1]),
             weight: Number(match[2]),
             port: Number(match[3]),
-            target: match[4].replace(/\\.$/, ''),
+            target: match[4].replace(/\.$/, ''),
           }
         : null;
     })
@@ -143,15 +143,15 @@ export async function aggiornaStatoMinecraft(env) {
   const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
   const currentTopic = channel.topic || '';
-  const topicLines = currentTopic.split('\\n');
+  const topicLines = currentTopic.split('\n');
   const previousMarker = topicLines[0].match(/^Minecraft server: (ONLINE|OFFLINE)$/);
   const previousState = previousMarker ? previousMarker[1] : null;
-  const oldDescription = previousMarker ? topicLines.slice(1).join('\\n') : currentTopic;
+  const oldDescription = previousMarker ? topicLines.slice(1).join('\n') : currentTopic;
   const state = online ? 'ONLINE' : 'OFFLINE';
   const statusLine = 'Minecraft server: ' + state;
   const newTopic = [statusLine, oldDescription]
     .filter(Boolean)
-    .join('\\n')
+    .join('\n')
     .slice(0, 1024);
 
   if (newTopic !== currentTopic) {
@@ -169,7 +169,7 @@ export async function aggiornaStatoMinecraft(env) {
       ? '🟢 Il server Minecraft è **ONLINE**.'
       : '🔴 Il server Minecraft è **OFFLINE**.',
     'Ultimo controllo: <t:' + checkedAt + ':R>',
-  ].join('\\n');
+  ].join('\n');
 
   await discordRequest('/channels/' + encodeURIComponent(channelId) + '/messages', token, {
     method: 'POST',
