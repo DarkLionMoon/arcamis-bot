@@ -313,26 +313,100 @@ export async function aggiornaStatoMinecraft(env) {
     topicMarkerFound: Boolean(previousMarker),
   });
 
-  if (stateChanged) {
-    const checkedAt = Math.floor(Date.now() / 1000);
-    const content = [
-      online
-        ? '🟢 Il server Minecraft è **ONLINE**.'
-        : '🔴 Il server Minecraft è **OFFLINE**.',
-      'Ultimo controllo: <t:' + checkedAt + ':R>',
-    ].join('\n');
+  const checkedAt = Math.floor(Date.now() / 1000);
+  const playerCount =
+    tcpCheck.status === 'fulfilled' && tcpCheck.value.online
+      ? tcpCheck.value.players
+      : null;
+  const content = [
+    online
+      ? '🟢 Il server Minecraft è **ONLINE**.'
+      : '🔴 Il server Minecraft è **OFFLINE**.',
+    playerCount === null ? null : 'Giocatori online: **' + playerCount + '**',
+    'Ultimo controllo: <t:' + checkedAt + ':R>',
+  ]
+    .filter(Boolean)
+    .join('\n');
 
-    const message = await discordRequest('/channels/' + encodeURIComponent(channelId) + '/messages', token, {
-      method: 'POST',
-      body: JSON.stringify({
-        content,
-        allowed_mentions: { parse: [] },
-      }),
-    });
-    console.info('Minecraft Discord status notification sent:', {
-      state,
-      messageId: message?.id || null,
-    });
+  const storedMessage = await env.DB.prepare(
+    'SELECT message_id FROM minecraft_status_messages WHERE channel_id = ?'
+  )
+    .bind(channelId)
+    .first();
+
+  let statusMessageId = storedMessage?.message_id || null;
+
+  if (statusMessageId) {
+    try {
+      await discordRequest(
+        channelPath + '/messages/' + encodeURIComponent(statusMessageId),
+        token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ content }),
+        }
+      );
+      console.info('Minecraft Discord status message updated:', {
+        state,
+        messageId: statusMessageId,
+        stateChanged,
+      });
+    } catch (error) {
+      if (!String(error?.message || error).startsWith('Discord API 404:')) {
+        throw error;
+      }
+      console.warn('Stored Minecraft status message no longer exists; searching for an older one.');
+      statusMessageId = null;
+    }
+  }
+
+  if (!statusMessageId) {
+    const recentMessages = await discordRequest(channelPath + '/messages?limit=100', token);
+    const existingStatusMessage = recentMessages.find(
+      (message) =>
+        message.author?.bot &&
+        /^🟢 Il server Minecraft è \*\*ONLINE\*\*\.|^🔴 Il server Minecraft è \*\*OFFLINE\*\*\./.test(
+          message.content || ''
+        )
+    );
+
+    if (existingStatusMessage) {
+      statusMessageId = existingStatusMessage.id;
+      await discordRequest(
+        channelPath + '/messages/' + encodeURIComponent(statusMessageId),
+        token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ content }),
+        }
+      );
+      console.info('Minecraft Discord status message recovered and updated:', {
+        state,
+        messageId: statusMessageId,
+      });
+    } else {
+      const createdMessage = await discordRequest(channelPath + '/messages', token, {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          allowed_mentions: { parse: [] },
+        }),
+      });
+      statusMessageId = createdMessage.id;
+      console.info('Minecraft Discord fixed status message created:', {
+        state,
+        messageId: statusMessageId,
+      });
+    }
+
+    await env.DB.prepare(
+      'INSERT INTO minecraft_status_messages (channel_id, message_id) ' +
+        'VALUES (?, ?) ' +
+        'ON CONFLICT(channel_id) DO UPDATE SET ' +
+        'message_id = excluded.message_id, updated_at = CURRENT_TIMESTAMP'
+    )
+      .bind(channelId, statusMessageId)
+      .run();
   }
 
   if (newTopic !== currentTopic) {
