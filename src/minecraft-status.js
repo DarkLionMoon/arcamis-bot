@@ -168,9 +168,12 @@ async function pingMinecraftServer(address, handshakeAddress = address) {
       // Aternos may answer on its fallback port while the actual server is stopped,
       // advertising a proxy status named "● Offline". A TCP response alone is not
       // enough to consider that server online.
-      const online = !/●\\s*offline\\b/i.test(
-        String(version || '').replace(/§[0-9a-fk-or]/gi, '')
-      );
+      const normalizedVersion = String(version || '')
+        .replace(/§[0-9a-fk-or]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      const online = !normalizedVersion.includes('● offline');
       return {
         source: 'minecraft-tcp',
         online,
@@ -285,8 +288,9 @@ export async function aggiornaStatoMinecraft(env) {
   const hasActiveAternosPort =
     resolved.source === 'srv' && resolved.port !== 25565;
   const online =
-    (tcpCheck.status === 'fulfilled' && tcpCheck.value.online) ||
-    hasActiveAternosPort;
+    tcpCheck.status === 'fulfilled'
+      ? tcpCheck.value.online
+      : hasActiveAternosPort;
 
   const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
@@ -302,28 +306,40 @@ export async function aggiornaStatoMinecraft(env) {
     .join('\n')
     .slice(0, 1024);
 
+  const stateChanged = previousState !== state;
+  console.info('Minecraft Discord state:', {
+    previousState,
+    state,
+    topicMarkerFound: Boolean(previousMarker),
+  });
+
+  if (stateChanged) {
+    const checkedAt = Math.floor(Date.now() / 1000);
+    const content = [
+      online
+        ? '🟢 Il server Minecraft è **ONLINE**.'
+        : '🔴 Il server Minecraft è **OFFLINE**.',
+      'Ultimo controllo: <t:' + checkedAt + ':R>',
+    ].join('\n');
+
+    const message = await discordRequest('/channels/' + encodeURIComponent(channelId) + '/messages', token, {
+      method: 'POST',
+      body: JSON.stringify({
+        content,
+        allowed_mentions: { parse: [] },
+      }),
+    });
+    console.info('Minecraft Discord status notification sent:', {
+      state,
+      messageId: message?.id || null,
+    });
+  }
+
   if (newTopic !== currentTopic) {
     await discordRequest(channelPath, token, {
       method: 'PATCH',
       body: JSON.stringify({ topic: newTopic }),
     });
+    console.info('Minecraft Discord channel topic updated:', { state });
   }
-
-  if (previousState === state) return;
-
-  const checkedAt = Math.floor(Date.now() / 1000);
-  const content = [
-    online
-      ? '🟢 Il server Minecraft è **ONLINE**.'
-      : '🔴 Il server Minecraft è **OFFLINE**.',
-    'Ultimo controllo: <t:' + checkedAt + ':R>',
-  ].join('\n');
-
-  await discordRequest('/channels/' + encodeURIComponent(channelId) + '/messages', token, {
-    method: 'POST',
-    body: JSON.stringify({
-      content,
-      allowed_mentions: { parse: [] },
-    }),
-  });
 }
