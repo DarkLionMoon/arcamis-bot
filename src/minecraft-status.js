@@ -448,13 +448,4 @@ export async function aggiornaStatoMinecraft(env) {
     });
     console.info('Minecraft Discord channel topic updated:', { state });
   }
-  }
-
-  if (newTopic !== currentTopic) {
-    await discordRequest(channelPath, token, {
-      method: 'PATCH',
-      body: JSON.stringify({ topic: newTopic }),
-    });
-    console.info('Minecraft Discord channel topic updated:', { state });
-  }
 }
