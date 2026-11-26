@@ -278,10 +278,15 @@ export async function aggiornaStatoMinecraft(env) {
     failed: failedChecks,
   });
 
-  // The Minecraft protocol ping is authoritative. Public status APIs can return
-  // stale positives for Aternos addresses when the actual server is stopped.
+  // Aternos advertises its active dynamic port through SRV. The default
+  // port can answer with a proxy "Offline" MOTD, while the active dynamic port
+  // may occasionally fail a status ping even as players are connected.
   const tcpCheck = statusChecks[0];
-  const online = tcpCheck.status === 'fulfilled' && tcpCheck.value.online;
+  const hasActiveAternosPort =
+    resolved.source === 'srv' && resolved.port !== 25565;
+  const online =
+    (tcpCheck.status === 'fulfilled' && tcpCheck.value.online) ||
+    hasActiveAternosPort;
 
   const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
