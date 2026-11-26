@@ -164,10 +164,17 @@ async function pingMinecraftServer(address, handshakeAddress = address) {
       if (received.length < jsonEnd) continue;
 
       const status = JSON.parse(new TextDecoder().decode(received.slice(jsonStart, jsonEnd)));
+      const version = status.version?.name || null;
+      // Aternos may answer on its fallback port while the actual server is stopped,
+      // advertising a proxy status named "● Offline". A TCP response alone is not
+      // enough to consider that server online.
+      const online = !/●\\s*offline\\b/i.test(
+        String(version || '').replace(/§[0-9a-fk-or]/gi, '')
+      );
       return {
         source: 'minecraft-tcp',
-        online: true,
-        version: status.version?.name || null,
+        online,
+        version,
         players: status.players?.online ?? null,
       };
     }
@@ -274,7 +281,7 @@ export async function aggiornaStatoMinecraft(env) {
   // The Minecraft protocol ping is authoritative. Public status APIs can return
   // stale positives for Aternos addresses when the actual server is stopped.
   const tcpCheck = statusChecks[0];
-  const online = tcpCheck.status === 'fulfilled';
+  const online = tcpCheck.status === 'fulfilled' && tcpCheck.value.online;
 
   const channelPath = '/channels/' + encodeURIComponent(channelId);
   const channel = await discordRequest(channelPath, token);
