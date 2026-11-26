@@ -322,13 +322,13 @@ export async function aggiornaStatoMinecraft(env) {
     author: { name: 'ARCAMIS • MONITOR MINECRAFT' },
     title: '⛏️ Stato del server',
     description: online
-      ? '🟢 **ONLINE**\\nIl server è attivo e raggiungibile.'
-      : '🔴 **OFFLINE**\\nIl server non risponde al controllo.',
+      ? '🟢 **ONLINE**\nIl server è attivo e raggiungibile.'
+      : '🔴 **OFFLINE**\nIl server non risponde al controllo.',
     color: online ? 0x2ecc71 : 0xe74c3c,
     fields: [
       {
         name: '🌐 Indirizzo',
-        value: '\`mndlm.aternos.me\`',
+        value: '`mndlm.aternos.me`',
         inline: true,
       },
       {
