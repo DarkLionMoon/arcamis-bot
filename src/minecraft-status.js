@@ -318,15 +318,38 @@ export async function aggiornaStatoMinecraft(env) {
     tcpCheck.status === 'fulfilled' && tcpCheck.value.online
       ? tcpCheck.value.players
       : null;
-  const content = [
-    online
-      ? '🟢 Il server Minecraft è **ONLINE**.'
-      : '🔴 Il server Minecraft è **OFFLINE**.',
-    playerCount === null ? null : 'Giocatori online: **' + playerCount + '**',
-    'Ultimo controllo: <t:' + checkedAt + ':R>',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const embed = {
+    author: { name: 'ARCAMIS • MONITOR MINECRAFT' },
+    title: '⛏️ Stato del server',
+    description: online
+      ? '🟢 **ONLINE**\\nIl server è attivo e raggiungibile.'
+      : '🔴 **OFFLINE**\\nIl server non risponde al controllo.',
+    color: online ? 0x2ecc71 : 0xe74c3c,
+    fields: [
+      {
+        name: '🌐 Indirizzo',
+        value: '\`mndlm.aternos.me\`',
+        inline: true,
+      },
+      {
+        name: '👥 Giocatori',
+        value: playerCount === null ? '—' : String(playerCount),
+        inline: true,
+      },
+      {
+        name: '🕓 Ultimo controllo',
+        value: '<t:' + checkedAt + ':R>',
+        inline: false,
+      },
+    ],
+    footer: { text: 'ARCAMIS  •  aggiornamento automatico ogni 5 minuti' },
+    timestamp: new Date().toISOString(),
+  };
+  const messagePayload = {
+    content: '',
+    embeds: [embed],
+    allowed_mentions: { parse: [] },
+  };
 
   const storedMessage = await env.DB.prepare(
     'SELECT message_id FROM minecraft_status_messages WHERE channel_id = ?'
@@ -343,10 +366,10 @@ export async function aggiornaStatoMinecraft(env) {
         token,
         {
           method: 'PATCH',
-          body: JSON.stringify({ content }),
+          body: JSON.stringify(messagePayload),
         }
       );
-      console.info('Minecraft Discord status message updated:', {
+      console.info('Minecraft Discord status embed updated:', {
         state,
         messageId: statusMessageId,
         stateChanged,
@@ -365,8 +388,11 @@ export async function aggiornaStatoMinecraft(env) {
     const existingStatusMessage = recentMessages.find(
       (message) =>
         message.author?.bot &&
-        /^🟢 Il server Minecraft è \*\*ONLINE\*\*\.|^🔴 Il server Minecraft è \*\*OFFLINE\*\*\./.test(
-          message.content || ''
+        (
+          /^🟢 Il server Minecraft è \*\*ONLINE\*\*\.|^🔴 Il server Minecraft è \*\*OFFLINE\*\*\./.test(
+            message.content || ''
+          ) ||
+          message.embeds?.some((item) => item.title === '⛏️ Stato del server')
         )
     );
 
@@ -377,7 +403,7 @@ export async function aggiornaStatoMinecraft(env) {
         token,
         {
           method: 'PATCH',
-          body: JSON.stringify({ content }),
+          body: JSON.stringify(messagePayload),
         }
       );
       console.info('Minecraft Discord status message recovered and updated:', {
@@ -387,13 +413,10 @@ export async function aggiornaStatoMinecraft(env) {
     } else {
       const createdMessage = await discordRequest(channelPath + '/messages', token, {
         method: 'POST',
-        body: JSON.stringify({
-          content,
-          allowed_mentions: { parse: [] },
-        }),
+        body: JSON.stringify(messagePayload),
       });
       statusMessageId = createdMessage.id;
-      console.info('Minecraft Discord fixed status message created:', {
+      console.info('Minecraft Discord fixed status embed created:', {
         state,
         messageId: statusMessageId,
       });
@@ -407,6 +430,24 @@ export async function aggiornaStatoMinecraft(env) {
     )
       .bind(channelId, statusMessageId)
       .run();
+  }
+
+  await discordRequest(
+    channelPath + '/pins/' + encodeURIComponent(statusMessageId),
+    token,
+    { method: 'PUT' }
+  );
+  console.info('Minecraft Discord status message pinned:', {
+    messageId: statusMessageId,
+  });
+
+  if (newTopic !== currentTopic) {
+    await discordRequest(channelPath, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ topic: newTopic }),
+    });
+    console.info('Minecraft Discord channel topic updated:', { state });
+  }
   }
 
   if (newTopic !== currentTopic) {
