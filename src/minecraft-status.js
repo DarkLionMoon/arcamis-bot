@@ -336,9 +336,9 @@ export async function aggiornaStatoMinecraft(env) {
     playerNamesText = 'Nessuno al momento';
   } else if (playerNames.length) {
     const shownNames = playerNames.slice(0, 12);
-    playerNamesText = shownNames.map((name) => '• ' + name).join('\\n');
+    playerNamesText = shownNames.map((name) => '• ' + name).join('\n');
     if (playerNames.length > shownNames.length) {
-      playerNamesText += '\\n… e altri ' + (playerNames.length - shownNames.length);
+      playerNamesText += '\n… e altri ' + (playerNames.length - shownNames.length);
     }
   } else {
     playerNamesText = 'Il server non comunica i nomi.';
