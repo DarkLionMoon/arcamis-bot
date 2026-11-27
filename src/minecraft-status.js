@@ -179,6 +179,18 @@ async function pingMinecraftServer(address, handshakeAddress = address) {
         online,
         version,
         players: status.players?.online ?? null,
+        maxPlayers: status.players?.max ?? null,
+        playerNames: Array.isArray(status.players?.sample)
+          ? status.players.sample
+              .map((player) =>
+                typeof player?.name === 'string'
+                  ? player.name
+                  : typeof player === 'string'
+                    ? player
+                    : null
+              )
+              .filter(Boolean)
+          : [],
       };
     }
     throw new Error('Risposta status Minecraft troppo grande');
@@ -314,10 +326,23 @@ export async function aggiornaStatoMinecraft(env) {
   });
 
   const checkedAt = Math.floor(Date.now() / 1000);
-  const playerCount =
-    tcpCheck.status === 'fulfilled' && tcpCheck.value.online
-      ? tcpCheck.value.players
-      : null;
+  const pingStatus = tcpCheck.status === 'fulfilled' ? tcpCheck.value : null;
+  const playerCount = pingStatus?.online ? pingStatus.players : online ? null : 0;
+  const maxPlayerCount = pingStatus?.online ? pingStatus.maxPlayers : null;
+  const playerNames = pingStatus?.online ? pingStatus.playerNames : [];
+  const serverVersion = pingStatus?.online ? pingStatus.version : null;
+  let playerNamesText;
+  if (!online || playerCount === 0) {
+    playerNamesText = 'Nessuno al momento';
+  } else if (playerNames.length) {
+    const shownNames = playerNames.slice(0, 12);
+    playerNamesText = shownNames.map((name) => '• ' + name).join('\\n');
+    if (playerNames.length > shownNames.length) {
+      playerNamesText += '\\n… e altri ' + (playerNames.length - shownNames.length);
+    }
+  } else {
+    playerNamesText = 'Il server non comunica i nomi.';
+  }
   const embed = {
     author: { name: 'ARCAMIS • MONITOR MINECRAFT' },
     title: '⛏️ Stato del server',
@@ -333,9 +358,22 @@ export async function aggiornaStatoMinecraft(env) {
       },
       {
         name: '👥 Giocatori',
-        value: playerCount === null ? '—' : String(playerCount),
+        value:
+          playerCount === null
+            ? '—'
+            : maxPlayerCount === null
+              ? String(playerCount) + ' online'
+              : playerCount + ' / ' + maxPlayerCount,
         inline: true,
       },
+      {
+        name: '👤 Nomi disponibili',
+        value: playerNamesText.slice(0, 1024),
+        inline: true,
+      },
+      ...(serverVersion
+        ? [{ name: '⚙️ Versione', value: serverVersion.slice(0, 1024), inline: true }]
+        : []),
       {
         name: '🕓 Ultimo controllo',
         value: '<t:' + checkedAt + ':R>',
